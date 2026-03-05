@@ -1,0 +1,9 @@
+process.env.NEXT_PUBLIC_INSFORGE_URL ??= "https://example.insforge.app";
+process.env.NEXT_PUBLIC_INSFORGE_ANON_KEY ??= "anon-test-key";
+process.env.INSFORGE_SERVICE_ROLE_KEY ??= "service-role-test-key";
+process.env.SESSION_SECRET ??= "session-secret-for-tests-very-long";
+process.env.ADMIN_PIN ??= "1234";
+process.env.OTP_PROVIDER ??= "email";
+process.env.SUPPORT_WHATSAPP_NUMBER ??= "59899123456";
+process.env.OTP_EMAIL_FROM ??= "no-reply@test.local";
+process.env.OTP_DEV_ECHO_CODE ??= "true";

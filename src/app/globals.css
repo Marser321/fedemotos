@@ -1,0 +1,111 @@
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+/* ===== FEDE MOTOS — DARK MODE PREMIUM ===== */
+
+@layer base {
+  :root {
+    --bg-primary: #0a0a0a;
+    --bg-card: #141414;
+    --accent: #ef4444;
+    --accent-glow: #dc2626;
+    --text-primary: #ffffff;
+    --text-muted: #a3a3a3;
+  }
+
+  * {
+    margin: 0;
+    padding: 0;
+    box-sizing: border-box;
+  }
+
+  body {
+    background-color: var(--bg-primary);
+    color: var(--text-primary);
+    font-family: var(--font-poppins), "Poppins", sans-serif;
+    -webkit-font-smoothing: antialiased;
+    -moz-osx-font-smoothing: grayscale;
+    overflow-x: hidden;
+  }
+
+  /* Scrollbar personalizada */
+  ::-webkit-scrollbar {
+    width: 6px;
+  }
+
+  ::-webkit-scrollbar-track {
+    background: #0a0a0a;
+  }
+
+  ::-webkit-scrollbar-thumb {
+    background: #333;
+    border-radius: 3px;
+  }
+
+  ::-webkit-scrollbar-thumb:hover {
+    background: #ef4444;
+  }
+}
+
+@layer components {
+  /* Card con glassmorphism */
+  .glass-card {
+    @apply bg-fede-card/80 backdrop-blur-xl border border-fede-border rounded-2xl;
+  }
+
+  /* Botón primario rojo */
+  .btn-primary {
+    @apply bg-fede-accent hover:bg-fede-accent-glow text-white font-poppins font-semibold 
+           px-6 py-3 rounded-xl transition-all duration-300 
+           hover:shadow-[0_0_30px_rgba(239,68,68,0.4)] active:scale-95;
+  }
+
+  /* Botón outline */
+  .btn-outline {
+    @apply border border-fede-accent text-fede-accent hover:bg-fede-accent/10 
+           font-poppins font-semibold px-6 py-3 rounded-xl transition-all duration-300;
+  }
+
+  /* Input estilizado */
+  .input-dark {
+    @apply w-full bg-fede-card border border-fede-border rounded-xl px-4 py-3 
+           text-white placeholder:text-fede-muted font-poppins text-sm
+           focus:outline-none focus:border-fede-accent focus:ring-1 focus:ring-fede-accent/50
+           transition-all duration-300;
+  }
+
+  /* Stat card del dashboard */
+  .stat-card {
+    @apply glass-card p-4 sm:p-6 flex flex-col gap-2;
+  }
+
+  /* Badge */
+  .badge-active {
+    @apply inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-green-500/20 text-green-400;
+  }
+
+  .badge-pending {
+    @apply inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-yellow-500/20 text-yellow-400;
+  }
+
+  .badge-inactive {
+    @apply inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-red-500/20 text-red-400;
+  }
+}
+
+/* Leaflet overrides para dark mode */
+.leaflet-container {
+  background: #0a0a0a !important;
+  border-radius: 16px;
+}
+
+.leaflet-tile-pane {
+  filter: invert(1) hue-rotate(180deg) brightness(0.8) contrast(1.2);
+}
+
+.leaflet-control-zoom a {
+  background-color: #141414 !important;
+  color: #ffffff !important;
+  border-color: #262626 !important;
+}
