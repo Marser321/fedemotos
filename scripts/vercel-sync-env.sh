@@ -84,14 +84,37 @@ if [[ -z "$prod_url" || -z "$staging_url" ]]; then
   exit 1
 fi
 
-if [[ "$prod_url" == "$staging_url" ]]; then
-  echo "Error: production y staging apuntan al mismo NEXT_PUBLIC_INSFORGE_URL" >&2
-  exit 1
-fi
+validate_security_keys() {
+  local file="$1"
+  local profile="$2"
+  local anon_key service_key session_secret admin_pin
 
-if [[ "$PROFILE" == "staging" && "$staging_url" == "$prod_url" ]]; then
-  echo "Error: staging no puede apuntar al backend productivo" >&2
-  exit 1
+  anon_key="$(get_env_value "$file" NEXT_PUBLIC_INSFORGE_ANON_KEY)"
+  service_key="$(get_env_value "$file" INSFORGE_SERVICE_ROLE_KEY)"
+  session_secret="$(get_env_value "$file" SESSION_SECRET)"
+  admin_pin="$(get_env_value "$file" ADMIN_PIN)"
+
+  if [[ -n "$anon_key" && -n "$service_key" && "$anon_key" == "$service_key" ]]; then
+    echo "Error: $profile tiene INSFORGE_SERVICE_ROLE_KEY igual a NEXT_PUBLIC_INSFORGE_ANON_KEY" >&2
+    exit 1
+  fi
+
+  if [[ "${#session_secret}" -lt 32 ]]; then
+    echo "Error: $profile tiene SESSION_SECRET corto (<32)" >&2
+    exit 1
+  fi
+
+  if [[ -z "${admin_pin//[[:space:]]/}" ]]; then
+    echo "Error: $profile tiene ADMIN_PIN vacío" >&2
+    exit 1
+  fi
+}
+
+validate_security_keys "$PROD_ENV_FILE" "production"
+validate_security_keys "$STAGING_ENV_FILE" "staging"
+
+if [[ "$prod_url" == "$staging_url" ]]; then
+  echo "WARN: production y staging comparten NEXT_PUBLIC_INSFORGE_URL (modo backend único temporal)" >&2
 fi
 
 required_keys=("${COMMON_REQUIRED_KEYS[@]}")
