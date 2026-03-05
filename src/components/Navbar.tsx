@@ -71,11 +71,11 @@ export function Navbar() {
                     <Link href="/" className="flex items-center gap-2 group">
                         <div className="w-9 h-9 rounded-lg bg-white/5 border border-fede-border flex items-center justify-center overflow-hidden group-hover:shadow-[0_0_20px_rgba(239,68,68,0.35)] transition-all duration-300">
                             <Image
-                                src="/icon-192.png"
+                                src="/branding/logo-rayo.png"
                                 alt="Fede Motos"
                                 width={28}
                                 height={28}
-                                className="rounded-md"
+                                className="object-contain"
                             />
                         </div>
                         <span className="font-poppins font-bold text-lg text-white tracking-tight">

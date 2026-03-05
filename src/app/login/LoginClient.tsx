@@ -112,7 +112,7 @@ export default function LoginClient() {
       >
         <div className="flex flex-col items-center mb-8">
           <div className="w-16 h-16 rounded-2xl bg-white/5 border border-fede-border flex items-center justify-center shadow-[0_0_40px_rgba(239,68,68,0.2)] mb-4 overflow-hidden">
-            <Image src="/icon-192.png" alt="Fede Motos" width={46} height={46} />
+            <Image src="/branding/logo-rayo.png" alt="Fede Motos" width={46} height={46} />
           </div>
           <h1 className="text-xl font-bold">
             Fede <span className="text-fede-accent">Motos</span>

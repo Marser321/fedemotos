@@ -28,6 +28,21 @@ Set these variables in Vercel Project Settings:
 - `OTP_EMAIL_FROM`
 - `OTP_DEV_ECHO_CODE` (production: `false`)
 
+### 2.1) Sync automático desde `.env.local`
+
+Si querés replicar exactamente las variables locales en Vercel (`production`, `preview`, `development`):
+
+```bash
+npm run vercel:env:sync
+```
+
+Este script:
+
+- valida claves requeridas en `.env.local`
+- hace overwrite en Vercel con `--force`
+- verifica presencia final por entorno (`vercel env ls --format json`)
+- advierte si `OTP_PROVIDER != email` o `OTP_DEV_ECHO_CODE != false`
+
 ## 3) Deploy
 
 Deploy from Vercel dashboard or CLI after verifying env vars.
