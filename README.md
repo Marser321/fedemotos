@@ -29,12 +29,13 @@ npm run dev
 - `npm run test`: unit + integración de rutas (Vitest)
 - `npm run build`: build de producción
 - `npm run test:smoke`: smoke checks HTTP contra URL desplegada (`SMOKE_BASE_URL`)
-- `npm run help:capture:staging`: genera capturas automáticas para centro de ayuda admin
-- `npm run test:e2e:staging`: flujo E2E de agenda en staging
-- `npm run test:db:staging`: verificación read-after-write contra DB staging real
+- `npm run help:capture:staging`: genera capturas automáticas para centro de ayuda admin (usa `E2E_BASE_URL`, fallback `E2E_STAGING_BASE_URL`)
+- `npm run test:e2e:staging`: flujo E2E de agenda en modo backend único con rollback/cleanup (`E2E-*`)
+- `npm run test:db:staging`: verificación DB read-after-write/read-after-delete con limpieza automática (`E2E-*`)
 - `npm run test:release:staging`: agregador de gates (`lint`, `test`, `build`, `capture`, `e2e`, `db`, `smoke`)
+- `npm run test:release:live`: alias explícito de release gate en backend único
 - `npm run env:init:profiles`: crea `.env.production.local` y `.env.staging.local` base
-- `npm run env:validate:profiles`: valida separación staging/production de InsForge URL
+- `npm run env:validate:profiles`: valida seguridad de perfiles; URL compartida queda en warning (modo backend único)
 - `npm run vercel:env:sync:production`: sync de `.env.production.local` a Vercel production
 - `npm run vercel:env:sync:staging`: sync de `.env.staging.local` a Vercel preview/development
 

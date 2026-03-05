@@ -7,9 +7,13 @@ Run all checks in this order:
 ```bash
 npm run env:validate:profiles
 npm run test:release:staging
+# alias equivalente
+npm run test:release:live
 ```
 
 If `test:release:staging` fails, release is blocked.
+
+Modo actual: backend único temporal (sin staging aislado). El gate mutante usa prefijo `E2E-<RUN_ID>`, cleanup automático y restore de agenda.
 
 ## 2) Required environment variables (Vercel)
 
@@ -29,7 +33,7 @@ Set these variables in Vercel Project Settings:
 - `NEXT_PUBLIC_RECEIPT_ISSUER_NAME`
 - `NEXT_PUBLIC_RECEIPT_ISSUER_PHONE`
 - `NEXT_PUBLIC_RECEIPT_ISSUER_ADDRESS`
-- `E2E_STAGING_BASE_URL` (runner/CI)
+- `E2E_BASE_URL` (runner/CI; fallback compatible `E2E_STAGING_BASE_URL`)
 - `E2E_STAGING_ADMIN_PIN` (runner/CI)
 - `E2E_STAGING_SERVICE_ROLE_KEY` (runner/CI privado)
 
@@ -49,7 +53,9 @@ npm run vercel:env:sync:staging
 
 Guardrails aplicados:
 
-- falla si `NEXT_PUBLIC_INSFORGE_URL` de staging y production coinciden.
+- warning si `NEXT_PUBLIC_INSFORGE_URL` de staging y production coinciden (modo backend único temporal).
+- falla si `INSFORGE_SERVICE_ROLE_KEY === NEXT_PUBLIC_INSFORGE_ANON_KEY`.
+- falla si `SESSION_SECRET` es corto o `ADMIN_PIN` está vacío.
 - `staging` solo sincroniza `preview/development`.
 - `production` solo sincroniza `production`.
 - fuerza `OTP_DEV_ECHO_CODE=false` en `production`.

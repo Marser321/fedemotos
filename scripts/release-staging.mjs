@@ -2,10 +2,10 @@
 
 import { spawnSync } from "node:child_process";
 
-const baseUrl = process.env.E2E_STAGING_BASE_URL;
+const baseUrl = process.env.E2E_BASE_URL || process.env.E2E_STAGING_BASE_URL;
 
 if (!baseUrl) {
-  console.error("E2E_STAGING_BASE_URL es obligatorio para test:release:staging");
+  console.error("E2E_BASE_URL o E2E_STAGING_BASE_URL es obligatorio para test:release:staging");
   process.exit(1);
 }
 
@@ -27,6 +27,8 @@ for (const [cmd, args] of commands) {
     stdio: "inherit",
     env: {
       ...process.env,
+      E2E_BASE_URL: process.env.E2E_BASE_URL || baseUrl,
+      E2E_STAGING_BASE_URL: process.env.E2E_STAGING_BASE_URL || baseUrl,
       SMOKE_BASE_URL: process.env.SMOKE_BASE_URL || baseUrl,
     },
   });
@@ -37,4 +39,4 @@ for (const [cmd, args] of commands) {
   }
 }
 
-console.log("\nRelease staging checks OK");
+console.log("\nRelease staging checks OK (single-backend compatible)");
