@@ -128,3 +128,49 @@ end $$;
 alter table public.agenda_configuracion enable row level security;
 alter table public.agenda_franjas_semanales enable row level security;
 alter table public.agenda_excepciones enable row level security;
+
+-- Politica temporal mientras se cierra hardening de service role / RLS.
+do $$
+begin
+  if not exists (
+    select 1 from pg_policies
+    where schemaname = 'public'
+      and tablename = 'agenda_configuracion'
+      and policyname = 'agenda_config_anon_all'
+  ) then
+    create policy agenda_config_anon_all
+      on public.agenda_configuracion
+      for all
+      to anon
+      using (true)
+      with check (true);
+  end if;
+
+  if not exists (
+    select 1 from pg_policies
+    where schemaname = 'public'
+      and tablename = 'agenda_franjas_semanales'
+      and policyname = 'agenda_weekly_anon_all'
+  ) then
+    create policy agenda_weekly_anon_all
+      on public.agenda_franjas_semanales
+      for all
+      to anon
+      using (true)
+      with check (true);
+  end if;
+
+  if not exists (
+    select 1 from pg_policies
+    where schemaname = 'public'
+      and tablename = 'agenda_excepciones'
+      and policyname = 'agenda_excepciones_anon_all'
+  ) then
+    create policy agenda_excepciones_anon_all
+      on public.agenda_excepciones
+      for all
+      to anon
+      using (true)
+      with check (true);
+  end if;
+end $$;
