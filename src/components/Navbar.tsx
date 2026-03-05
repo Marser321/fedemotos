@@ -1,6 +1,7 @@
 "use client";
 
 import Link from "next/link";
+import Image from "next/image";
 import { usePathname, useRouter } from "next/navigation";
 import { useState, useEffect } from "react";
 import { motion, AnimatePresence } from "framer-motion";
@@ -68,11 +69,17 @@ export function Navbar() {
                 <div className="max-w-7xl mx-auto px-4 h-16 flex items-center justify-between">
                     {/* Logo */}
                     <Link href="/" className="flex items-center gap-2 group">
-                        <div className="w-9 h-9 rounded-lg bg-fede-accent flex items-center justify-center group-hover:shadow-[0_0_20px_rgba(239,68,68,0.5)] transition-all duration-300">
-                            <Wrench className="w-5 h-5 text-white" />
+                        <div className="w-9 h-9 rounded-lg bg-white/5 border border-fede-border flex items-center justify-center overflow-hidden group-hover:shadow-[0_0_20px_rgba(239,68,68,0.35)] transition-all duration-300">
+                            <Image
+                                src="/icon-192.png"
+                                alt="Fede Motos"
+                                width={28}
+                                height={28}
+                                className="rounded-md"
+                            />
                         </div>
                         <span className="font-poppins font-bold text-lg text-white tracking-tight">
-                            Fede <span className="text-fede-accent">Moto Servicio</span>
+                            Fede <span className="text-fede-accent">Motos</span>
                         </span>
                     </Link>
 

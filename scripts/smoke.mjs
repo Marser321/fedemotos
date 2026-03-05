@@ -55,6 +55,25 @@ async function run() {
     fail("GET /api/auth/sesion", "respuesta inválida");
   }
 
+  const agendaConfig = await jsonRequest("/api/agenda/config");
+  if (agendaConfig.response.status !== 200) {
+    fail("GET /api/agenda/config", `status ${agendaConfig.response.status}`);
+  }
+  if (
+    !agendaConfig.body?.data ||
+    typeof agendaConfig.body.data.acceptingBookings !== "boolean"
+  ) {
+    fail("GET /api/agenda/config", "respuesta inválida");
+  }
+
+  const invalidAvailability = await jsonRequest("/api/agenda/disponibilidad");
+  if (invalidAvailability.response.status !== 400) {
+    fail(
+      "GET /api/agenda/disponibilidad (sin fecha)",
+      `esperaba 400 y llegó ${invalidAvailability.response.status}`
+    );
+  }
+
   const invalidAdmin = await jsonRequest("/api/auth/login", {
     method: "POST",
     body: JSON.stringify({ mode: "admin", pin: "0000" }),
@@ -98,6 +117,20 @@ async function run() {
     fail(
       "POST /api/admin/reminders/:id/mark-sent (anon)",
       `error code esperado FORBIDDEN y llegó ${markSentAnon.body?.error?.code || "n/a"}`
+    );
+  }
+
+  const adminAgendaConfigAnon = await jsonRequest("/api/admin/agenda/config");
+  if (adminAgendaConfigAnon.response.status !== 403) {
+    fail(
+      "GET /api/admin/agenda/config (anon)",
+      `esperaba 403 y llegó ${adminAgendaConfigAnon.response.status}`
+    );
+  }
+  if (adminAgendaConfigAnon.body?.error?.code !== "FORBIDDEN") {
+    fail(
+      "GET /api/admin/agenda/config (anon)",
+      `error code esperado FORBIDDEN y llegó ${adminAgendaConfigAnon.body?.error?.code || "n/a"}`
     );
   }
 

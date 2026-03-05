@@ -15,7 +15,13 @@ export const metadata: Metadata = {
     "Membresía de asistencia vial y mantenimiento preventivo para motociclistas. 3 auxilios mensuales incluidos. Tu taller de confianza.",
   manifest: "/manifest.json",
   icons: {
-    icon: "/favicon.ico",
+    icon: [
+      { url: "/favicon.ico", type: "image/x-icon" },
+      { url: "/icon-192.png", sizes: "192x192", type: "image/png" },
+      { url: "/icon-512.png", sizes: "512x512", type: "image/png" },
+    ],
+    apple: [{ url: "/icon-192.png", sizes: "192x192", type: "image/png" }],
+    shortcut: "/favicon.ico",
   },
 };
 

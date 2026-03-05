@@ -1,6 +1,10 @@
 import { AppError } from "./errors";
 import { getInsforgeServiceClient } from "./insforge";
 import { normalizePhone } from "./phone";
+import {
+  buildAgendaSlotNowForManualService,
+  validarSlotAgendaReserva,
+} from "./agenda";
 import type {
   AuxilioEstado,
   AuxilioPrioridad,
@@ -617,10 +621,10 @@ export async function crearTurnoTaller(data: {
   horario: string;
   notas?: string;
 }) {
-  const fechaTurno = new Date(`${data.fecha}T${data.horario}:00`);
-  if (Number.isNaN(fechaTurno.getTime())) {
-    throw new AppError("INVALID_DATETIME", "Fecha y horario inválidos", 400);
-  }
+  const slot = await validarSlotAgendaReserva({
+    fecha: data.fecha,
+    hora: data.horario,
+  });
 
   const cliente = await findOrCreateCliente({
     nombre: data.nombre,
@@ -643,7 +647,9 @@ export async function crearTurnoTaller(data: {
         cliente_id: cliente.id,
         vehiculo_id: vehiculo.id,
         servicio_solicitado: data.notas?.trim() || "Mantenimiento general",
-        fecha_turno: fechaTurno.toISOString(),
+        fecha_turno: slot.fechaTurnoIso,
+        fecha_slot: slot.fechaSlot,
+        hora_slot: slot.horaSlot,
         estado: "pendiente",
         notas: data.notas?.trim() || null,
         costo: 0,
@@ -652,6 +658,9 @@ export async function crearTurnoTaller(data: {
     .select("id")
     .maybeSingle()) as DbResponse<{ id: string }>;
 
+  if (response.error?.code === "23505") {
+    throw new AppError("SLOT_UNAVAILABLE", "Ese horario ya fue reservado", 409);
+  }
   throwDbError(response.error, "TURNO_CREATE_FAILED", "No se pudo crear el turno");
 
   if (!response.data?.id) {
@@ -794,6 +803,7 @@ export async function crearServicioManual(data: {
   });
 
   const service = getInsforgeServiceClient();
+  const slot = buildAgendaSlotNowForManualService();
   const response = (await service.database
     .from("turnos_taller")
     .insert([
@@ -803,7 +813,9 @@ export async function crearServicioManual(data: {
         servicio_solicitado: data.servicio.trim(),
         estado: "completado",
         costo: data.costo,
-        fecha_turno: new Date().toISOString(),
+        fecha_turno: slot.fechaTurnoIso,
+        fecha_slot: slot.fechaSlot,
+        hora_slot: slot.horaSlot,
         creado_en: new Date().toISOString(),
       },
     ])

@@ -6,6 +6,13 @@ export type TurnoEstado = "pendiente" | "en_proceso" | "completado" | "cancelado
 export type AuxilioTipo = "auxilio" | "traslado";
 export type AuxilioPrioridad = "baja" | "media" | "alta" | "urgente";
 export type ReminderEstado = "pendiente" | "enviado_manual" | "omitido" | "error";
+export type AgendaStatus = "activa" | "pausada" | "deshabilitada";
+export type AgendaExceptionTipo = "bloqueo" | "habilitacion";
+export type AgendaSlotReason =
+  | "booked"
+  | "blocked"
+  | "outside_window"
+  | "agenda_paused";
 export type ReminderTipoEvento =
   | "membresia_vence_7"
   | "membresia_vence_3"
@@ -157,4 +164,51 @@ export interface ClienteOperacionPrefill {
     modelo: string;
     label: string;
   }>;
+}
+
+export interface AgendaConfig {
+  status: AgendaStatus;
+  pauseReason?: string | null;
+  pauseUntil?: string | null;
+  slotDurationMinutes: number;
+  minDaysAhead: number;
+  maxDaysAhead: number;
+  timezone: "America/Montevideo";
+}
+
+export interface AgendaWeeklyRule {
+  id: string;
+  dayOfWeek: 1 | 2 | 3 | 4 | 5 | 6 | 7;
+  enabled: boolean;
+  startTime: string;
+  endTime: string;
+}
+
+export interface AgendaException {
+  id: string;
+  fecha: string;
+  tipo: AgendaExceptionTipo;
+  horaDesde: string;
+  horaHasta: string;
+  motivo?: string;
+  createdBy?: string | null;
+  createdAt?: string;
+}
+
+export interface AgendaAvailabilitySlot {
+  hora: string;
+  available: boolean;
+  reason?: AgendaSlotReason;
+  turnoId?: string;
+}
+
+export interface AgendaTurnoRow {
+  id: string;
+  clienteNombre: string;
+  telefono: string;
+  fecha: string;
+  hora: string;
+  estado: TurnoEstado;
+  servicio: string;
+  notas?: string | null;
 }

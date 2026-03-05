@@ -5,6 +5,9 @@ const phoneSchema = z
   .min(6, "Ingresá un número de teléfono válido")
   .max(24, "Teléfono demasiado largo");
 
+const dateSchema = z.string().regex(/^\d{4}-\d{2}-\d{2}$/, "Fecha inválida");
+const timeSchema = z.string().regex(/^([01]\d|2[0-3]):[0-5]\d$/, "Hora inválida");
+
 export const adminLoginSchema = z.object({
   mode: z.literal("admin"),
   pin: z.string().min(4, "Ingresá el PIN de administrador"),
@@ -104,8 +107,8 @@ export const crearTurnoSchema = z.object({
   marca: z.string().min(1),
   modelo: z.string().min(1),
   kilometraje: z.string().min(1),
-  fecha: z.string().min(1),
-  horario: z.string().min(1),
+  fecha: dateSchema,
+  horario: timeSchema,
   notas: z.string().max(600).optional().default(""),
 });
 
@@ -163,6 +166,94 @@ export const adminSkipReminderSchema = z.object({
 export const adminClienteLookupQuerySchema = z.object({
   telefono: phoneSchema,
 });
+
+export const agendaDisponibilidadQuerySchema = z.object({
+  fecha: dateSchema,
+});
+
+export const adminAgendaConfigPatchSchema = z
+  .object({
+    status: z.enum(["activa", "pausada", "deshabilitada"]).optional(),
+    pauseReason: z.string().max(240).nullable().optional(),
+    pauseUntil: z.string().datetime({ offset: true }).nullable().optional(),
+    minDaysAhead: z.number().int().min(0).max(120).optional(),
+    maxDaysAhead: z.number().int().min(0).max(120).optional(),
+    slotDurationMinutes: z.number().int().min(30).max(120).optional(),
+  })
+  .superRefine((data, ctx) => {
+    if (
+      typeof data.minDaysAhead === "number" &&
+      typeof data.maxDaysAhead === "number" &&
+      data.maxDaysAhead < data.minDaysAhead
+    ) {
+      ctx.addIssue({
+        code: z.ZodIssueCode.custom,
+        message: "maxDaysAhead debe ser mayor o igual a minDaysAhead",
+        path: ["maxDaysAhead"],
+      });
+    }
+  });
+
+export const adminAgendaWeeklyRuleSchema = z.object({
+  id: z.string().uuid().optional(),
+  dayOfWeek: z.number().int().min(1).max(7),
+  enabled: z.boolean(),
+  startTime: timeSchema,
+  endTime: timeSchema,
+});
+
+export const adminAgendaWeeklyPutSchema = z
+  .object({
+    rules: z.array(adminAgendaWeeklyRuleSchema).min(1).max(50),
+  })
+  .superRefine((data, ctx) => {
+    for (const rule of data.rules) {
+      if (rule.startTime >= rule.endTime) {
+        ctx.addIssue({
+          code: z.ZodIssueCode.custom,
+          message: "La hora de inicio debe ser menor que la hora de fin",
+          path: ["rules"],
+        });
+      }
+    }
+  });
+
+export const adminAgendaExceptionCreateSchema = z
+  .object({
+    fecha: dateSchema,
+    tipo: z.enum(["bloqueo", "habilitacion"]),
+    horaDesde: timeSchema,
+    horaHasta: timeSchema,
+    motivo: z.string().max(240).optional(),
+  })
+  .superRefine((data, ctx) => {
+    if (data.horaDesde >= data.horaHasta) {
+      ctx.addIssue({
+        code: z.ZodIssueCode.custom,
+        message: "La hora desde debe ser menor que la hora hasta",
+        path: ["horaHasta"],
+      });
+    }
+  });
+
+export const adminAgendaTurnoPatchSchema = z
+  .object({
+    estado: z.enum(["pendiente", "en_proceso", "completado", "cancelado"]).optional(),
+    fecha: dateSchema.optional(),
+    hora: timeSchema.optional(),
+    notas: z.string().max(600).optional(),
+  })
+  .superRefine((data, ctx) => {
+    const hasFecha = typeof data.fecha === "string";
+    const hasHora = typeof data.hora === "string";
+    if (hasFecha !== hasHora) {
+      ctx.addIssue({
+        code: z.ZodIssueCode.custom,
+        message: "Para reprogramar debés enviar fecha y hora juntas",
+        path: ["fecha"],
+      });
+    }
+  });
 
 export const crearServicioSchema = z.object({
   clienteNombre: z.string().min(2),

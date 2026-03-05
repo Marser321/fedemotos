@@ -5,6 +5,7 @@ import { motion } from "framer-motion";
 import {
   Users,
   AlertTriangle,
+  CalendarDays,
   Wrench,
   DollarSign,
   Clock,
@@ -19,6 +20,7 @@ import {
   CheckCircle2,
   Plus,
 } from "lucide-react";
+import Link from "next/link";
 import jsPDF from "jspdf";
 import type {
   AuxilioEstado,
@@ -38,10 +40,17 @@ import {
   NuevaMembresiaModal,
   NuevaOperacionModal,
 } from "@/components/AdminModals";
+import { AdminAgendaTab } from "@/components/AdminAgendaTab";
 import { CargaMasivaModal } from "@/components/CargaMasivaModal";
 import { MapView } from "@/components/MapView";
 
-type AdminTab = "overview" | "auxilios" | "membresias" | "reminders" | "servicios";
+type AdminTab =
+  | "overview"
+  | "auxilios"
+  | "membresias"
+  | "agenda"
+  | "reminders"
+  | "servicios";
 
 interface DashboardApiResponse {
   ok: true;
@@ -557,6 +566,7 @@ export default function AdminClient({
     { id: "overview" as const, label: "Resumen", icon: TrendingUp },
     { id: "auxilios" as const, label: "Operaciones", icon: AlertTriangle },
     { id: "membresias" as const, label: "Membresías", icon: Users },
+    { id: "agenda" as const, label: "Agenda", icon: CalendarDays },
     { id: "reminders" as const, label: "Recordatorios", icon: Bell },
     { id: "servicios" as const, label: "Servicios", icon: Wrench },
   ];
@@ -572,16 +582,21 @@ export default function AdminClient({
               </h1>
               <p className="text-fede-muted text-sm">Auxilios, traslados, membresías y recordatorios.</p>
             </div>
-            <button
-              onClick={() => {
-                void Promise.all([refreshDashboard(), fetchOperaciones(), fetchMembresias(), fetchReminders()]);
-              }}
-              className="btn-outline text-xs py-2 px-4 flex items-center gap-2"
-              disabled={loadingDashboard || opsLoading || membresiasLoading || remindersLoading}
-            >
-              <RefreshCw className="w-3 h-3" />
-              Actualizar todo
-            </button>
+            <div className="flex items-center gap-2">
+              <Link href="/" className="btn-outline text-xs py-2 px-4 inline-flex items-center gap-2">
+                Ir al sitio
+              </Link>
+              <button
+                onClick={() => {
+                  void Promise.all([refreshDashboard(), fetchOperaciones(), fetchMembresias(), fetchReminders()]);
+                }}
+                className="btn-outline text-xs py-2 px-4 flex items-center gap-2"
+                disabled={loadingDashboard || opsLoading || membresiasLoading || remindersLoading}
+              >
+                <RefreshCw className="w-3 h-3" />
+                Actualizar todo
+              </button>
+            </div>
           </div>
           {uiError && (
             <div className="mt-3 rounded-xl border border-red-500/30 bg-red-500/10 px-4 py-3 text-sm text-red-300">
@@ -649,6 +664,8 @@ export default function AdminClient({
             }}
           />
         )}
+
+        {activeTab === "agenda" && <AdminAgendaTab />}
 
         {activeTab === "reminders" && (
           <RemindersTab

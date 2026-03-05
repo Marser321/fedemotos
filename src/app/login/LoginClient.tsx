@@ -4,7 +4,6 @@ import { useState } from "react";
 import { useRouter, useSearchParams } from "next/navigation";
 import { motion, AnimatePresence } from "framer-motion";
 import {
-  Wrench,
   Phone,
   Lock,
   Loader2,
@@ -15,6 +14,7 @@ import {
   Mail,
 } from "lucide-react";
 import Link from "next/link";
+import Image from "next/image";
 
 type LoginMode = "cliente" | "admin";
 type ClienteStep = "request" | "verify";
@@ -111,11 +111,11 @@ export default function LoginClient() {
         className="relative z-10 w-full max-w-sm"
       >
         <div className="flex flex-col items-center mb-8">
-          <div className="w-16 h-16 rounded-2xl bg-fede-accent flex items-center justify-center shadow-[0_0_40px_rgba(239,68,68,0.3)] mb-4">
-            <Wrench className="w-8 h-8 text-white" />
+          <div className="w-16 h-16 rounded-2xl bg-white/5 border border-fede-border flex items-center justify-center shadow-[0_0_40px_rgba(239,68,68,0.2)] mb-4 overflow-hidden">
+            <Image src="/icon-192.png" alt="Fede Motos" width={46} height={46} />
           </div>
           <h1 className="text-xl font-bold">
-            Fede <span className="text-fede-accent">Moto Servicios</span>
+            Fede <span className="text-fede-accent">Motos</span>
           </h1>
           <p className="text-fede-muted text-sm mt-1">Iniciá sesión para continuar</p>
         </div>

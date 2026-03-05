@@ -2,6 +2,13 @@
 
 Aplicación Next.js 16 + InsForge para gestión de clientes, membresías, auxilios y turnos de taller.
 
+Incluye agenda operativa modular:
+
+- Configuración global (activa/pausada/deshabilitada).
+- Franja semanal editable.
+- Excepciones por fecha/rango (bloqueo/habilitación).
+- Disponibilidad pública real por día (sin horarios hardcodeados).
+
 ## Requisitos
 
 - Node.js 20+

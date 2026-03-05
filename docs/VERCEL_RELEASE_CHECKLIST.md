@@ -45,10 +45,13 @@ Smoke script validates:
 - Public login page availability.
 - Redirect protection on `/admin` without session.
 - Session endpoint shape.
+- Agenda pública (`/api/agenda/config`) operativa.
+- Validación de disponibilidad (`/api/agenda/disponibilidad` sin fecha => 400).
 - Admin login hardening (invalid PIN returns `401`).
 - Input validation in mutating endpoint (`/api/turnos`).
 - Admin lookup endpoint protegido (`/api/admin/clientes/lookup`).
 - Recordatorios admin protegidos y con error tipado (`FORBIDDEN`) sin sesión.
+- Configuración de agenda admin protegida (`/api/admin/agenda/config` sin sesión => 403).
 
 ## 4.1) Cron operativo de recordatorios
 

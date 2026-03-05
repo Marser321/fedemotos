@@ -4,7 +4,6 @@ import { useState } from "react";
 import { useRouter } from "next/navigation";
 import { motion, AnimatePresence } from "framer-motion";
 import {
-  Wrench,
   Phone,
   User,
   Mail,
@@ -16,6 +15,7 @@ import {
   KeyRound,
 } from "lucide-react";
 import Link from "next/link";
+import Image from "next/image";
 
 const marcas = [
   "Honda",
@@ -120,8 +120,8 @@ export default function RegistroClient() {
         className="relative z-10 w-full max-w-sm"
       >
         <div className="flex flex-col items-center mb-8">
-          <div className="w-16 h-16 rounded-2xl bg-fede-accent flex items-center justify-center shadow-[0_0_40px_rgba(239,68,68,0.3)] mb-4">
-            <Wrench className="w-8 h-8 text-white" />
+          <div className="w-16 h-16 rounded-2xl bg-white/5 border border-fede-border flex items-center justify-center shadow-[0_0_40px_rgba(239,68,68,0.2)] mb-4 overflow-hidden">
+            <Image src="/icon-192.png" alt="Fede Motos" width={46} height={46} />
           </div>
           <h1 className="text-xl font-bold">
             Creá tu <span className="text-fede-accent">Cuenta</span>

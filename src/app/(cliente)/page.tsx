@@ -94,12 +94,12 @@ export default function HomePage() {
             transition={{ duration: 0.6 }}
             className="flex flex-col items-center lg:items-start gap-2 mb-8 text-center lg:text-left"
           >
-            <h1 className="text-2xl sm:text-3xl lg:text-5xl font-bold leading-tight">
-              <span className="text-fede-accent block lg:inline">Auxilio</span> de Emergencia
-            </h1>
-            <p className="text-fede-muted text-sm sm:text-base max-w-md lg:max-w-lg mt-2 lg:mt-4">
-              ¿Tu moto te dejó a pie? Tocá el botón y te localizamos al instante con el móvil más cercano.
-            </p>
+                    <h1 className="text-2xl sm:text-3xl lg:text-5xl font-bold leading-tight">
+                        <span className="text-fede-accent block lg:inline">Auxilio</span> de Emergencia
+                    </h1>
+                    <p className="text-fede-muted text-sm sm:text-base max-w-md lg:max-w-lg mt-2 lg:mt-4">
+                        ¿Tu moto te dejó a pie? Tocá el botón y activamos asistencia con el móvil disponible más cercano.
+                    </p>
           </motion.div>
 
           <motion.div
@@ -185,7 +185,7 @@ export default function HomePage() {
             </div>
 
             <Link href="/agendar" className="btn-primary w-full sm:w-auto px-8 py-4 text-center inline-block">
-              Agendar Diagnóstico
+              Agendar service
             </Link>
           </motion.div>
         </div>
