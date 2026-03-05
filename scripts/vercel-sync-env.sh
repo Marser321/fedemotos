@@ -65,6 +65,9 @@ for target in "${TARGETS[@]}"; do
   echo "-> Entorno: $target"
   for key in "${REQUIRED_KEYS[@]}"; do
     value="$(get_env_value "$key")"
+    if [[ "$target" == "production" && "$key" == "OTP_DEV_ECHO_CODE" && "$value" != "false" ]]; then
+      value="false"
+    fi
     if [[ "$target" == "preview" ]]; then
       # Tercer argumento vacío => aplica a todas las ramas de preview.
       npx vercel env add "$key" "$target" "" --value "$value" --force --yes >/dev/null

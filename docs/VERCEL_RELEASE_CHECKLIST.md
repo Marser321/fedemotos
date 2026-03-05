@@ -40,8 +40,9 @@ Este script:
 
 - valida claves requeridas en `.env.local`
 - hace overwrite en Vercel con `--force`
+- fuerza `OTP_DEV_ECHO_CODE=false` en `production` como guardrail de seguridad
 - verifica presencia final por entorno (`vercel env ls --format json`)
-- advierte si `OTP_PROVIDER != email` o `OTP_DEV_ECHO_CODE != false`
+- advierte si `OTP_PROVIDER != email`
 
 ## 3) Deploy
 
