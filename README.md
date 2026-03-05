@@ -18,7 +18,7 @@ Incluye agenda operativa modular:
 
 ```bash
 npm install
-cp .env.example .env.local
+# crear .env.staging.local y .env.production.local a partir de .env.example
 npm run dev
 ```
 
@@ -29,6 +29,14 @@ npm run dev
 - `npm run test`: unit + integración de rutas (Vitest)
 - `npm run build`: build de producción
 - `npm run test:smoke`: smoke checks HTTP contra URL desplegada (`SMOKE_BASE_URL`)
+- `npm run help:capture:staging`: genera capturas automáticas para centro de ayuda admin
+- `npm run test:e2e:staging`: flujo E2E de agenda en staging
+- `npm run test:db:staging`: verificación read-after-write contra DB staging real
+- `npm run test:release:staging`: agregador de gates (`lint`, `test`, `build`, `capture`, `e2e`, `db`, `smoke`)
+- `npm run env:init:profiles`: crea `.env.production.local` y `.env.staging.local` base
+- `npm run env:validate:profiles`: valida separación staging/production de InsForge URL
+- `npm run vercel:env:sync:production`: sync de `.env.production.local` a Vercel production
+- `npm run vercel:env:sync:staging`: sync de `.env.staging.local` a Vercel preview/development
 
 ## Cron de recordatorios
 

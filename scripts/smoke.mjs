@@ -61,7 +61,8 @@ async function run() {
   }
   if (
     !agendaConfig.body?.data ||
-    typeof agendaConfig.body.data.acceptingBookings !== "boolean"
+    typeof agendaConfig.body.data.acceptingBookings !== "boolean" ||
+    !agendaConfig.body.data.bookingWindow
   ) {
     fail("GET /api/agenda/config", "respuesta inválida");
   }
@@ -131,6 +132,42 @@ async function run() {
     fail(
       "GET /api/admin/agenda/config (anon)",
       `error code esperado FORBIDDEN y llegó ${adminAgendaConfigAnon.body?.error?.code || "n/a"}`
+    );
+  }
+
+  const adminAgendaWeeklyAnon = await jsonRequest("/api/admin/agenda/weekly");
+  if (adminAgendaWeeklyAnon.response.status !== 403) {
+    fail(
+      "GET /api/admin/agenda/weekly (anon)",
+      `esperaba 403 y llegó ${adminAgendaWeeklyAnon.response.status}`
+    );
+  }
+  if (adminAgendaWeeklyAnon.body?.error?.code !== "FORBIDDEN") {
+    fail(
+      "GET /api/admin/agenda/weekly (anon)",
+      `error code esperado FORBIDDEN y llegó ${adminAgendaWeeklyAnon.body?.error?.code || "n/a"}`
+    );
+  }
+
+  const adminAgendaExceptionAnon = await jsonRequest("/api/admin/agenda/excepciones", {
+    method: "POST",
+    body: JSON.stringify({
+      fecha: "2026-03-10",
+      tipo: "bloqueo",
+      horaDesde: "09:00",
+      horaHasta: "10:00",
+    }),
+  });
+  if (adminAgendaExceptionAnon.response.status !== 403) {
+    fail(
+      "POST /api/admin/agenda/excepciones (anon)",
+      `esperaba 403 y llegó ${adminAgendaExceptionAnon.response.status}`
+    );
+  }
+  if (adminAgendaExceptionAnon.body?.error?.code !== "FORBIDDEN") {
+    fail(
+      "POST /api/admin/agenda/excepciones (anon)",
+      `error code esperado FORBIDDEN y llegó ${adminAgendaExceptionAnon.body?.error?.code || "n/a"}`
     );
   }
 

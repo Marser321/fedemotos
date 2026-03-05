@@ -7,3 +7,6 @@ process.env.OTP_PROVIDER ??= "email";
 process.env.SUPPORT_WHATSAPP_NUMBER ??= "59899123456";
 process.env.OTP_EMAIL_FROM ??= "no-reply@test.local";
 process.env.OTP_DEV_ECHO_CODE ??= "true";
+process.env.NEXT_PUBLIC_RECEIPT_ISSUER_NAME ??= "Fede Motos Servicios";
+process.env.NEXT_PUBLIC_RECEIPT_ISSUER_PHONE ??= "59899123456";
+process.env.NEXT_PUBLIC_RECEIPT_ISSUER_ADDRESS ??= "Montevideo, Uruguay";

@@ -1,0 +1,23 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 640 280" role="img" aria-label="Animacion crear excepcion">
+  <defs>
+    <style>
+      .tick { animation: tick 1.5s ease-in-out infinite; }
+      .draw { stroke-dasharray: 160; stroke-dashoffset: 160; animation: draw 2.4s ease-in-out infinite; }
+      @keyframes tick { 0%,100% { opacity: .35;} 50% {opacity: 1;} }
+      @keyframes draw { 0% { stroke-dashoffset: 160;} 50%,100% { stroke-dashoffset: 0;} }
+    </style>
+  </defs>
+  <rect width="640" height="280" fill="#101010"/>
+  <rect x="34" y="30" width="572" height="220" rx="14" fill="#121212" stroke="#333"/>
+  <rect x="56" y="56" width="250" height="170" rx="12" fill="#171717" stroke="#2c2c2c"/>
+  <rect x="72" y="74" width="100" height="14" rx="7" fill="#ef4444" class="tick"/>
+  <rect x="72" y="100" width="210" height="24" rx="8" fill="#222"/>
+  <rect x="72" y="132" width="102" height="24" rx="8" fill="#222"/>
+  <rect x="180" y="132" width="102" height="24" rx="8" fill="#222"/>
+  <rect x="72" y="164" width="210" height="24" rx="8" fill="#ef444433"/>
+  <rect x="334" y="56" width="250" height="170" rx="12" fill="#171717" stroke="#2c2c2c"/>
+  <rect x="350" y="78" width="180" height="14" rx="7" fill="#2a2a2a"/>
+  <rect x="350" y="104" width="220" height="16" rx="8" fill="#252525"/>
+  <rect x="350" y="130" width="210" height="16" rx="8" fill="#252525"/>
+  <path class="draw" d="M356 176 H560" stroke="#ef4444" stroke-width="8" stroke-linecap="round"/>
+</svg>

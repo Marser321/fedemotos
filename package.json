@@ -10,7 +10,15 @@
     "test": "vitest run",
     "test:watch": "vitest",
     "test:smoke": "node scripts/smoke.mjs",
-    "vercel:env:sync": "bash scripts/vercel-sync-env.sh"
+    "help:capture:staging": "node scripts/help-capture-staging.mjs",
+    "test:e2e:staging": "node scripts/e2e-staging.mjs",
+    "test:db:staging": "node scripts/test-db-staging.mjs",
+    "test:release:staging": "node scripts/release-staging.mjs",
+    "env:init:profiles": "bash scripts/init-env-profiles.sh",
+    "env:validate:profiles": "node scripts/validate-env-profile.mjs",
+    "vercel:env:sync:production": "bash scripts/vercel-sync-env.sh production",
+    "vercel:env:sync:staging": "bash scripts/vercel-sync-env.sh staging",
+    "vercel:env:sync": "bash scripts/vercel-sync-env.sh staging"
   },
   "dependencies": {
     "@insforge/sdk": "^1.1.6-dev.0",
@@ -25,6 +33,8 @@
     "react-leaflet": "^5.0.0"
   },
   "devDependencies": {
+    "@testing-library/jest-dom": "^6.9.1",
+    "@testing-library/react": "^16.3.2",
     "@types/jspdf": "^1.3.3",
     "@types/leaflet": "^1.9.21",
     "@types/node": "^20",
@@ -33,6 +43,8 @@
     "autoprefixer": "^10.4.27",
     "eslint": "^9",
     "eslint-config-next": "16.1.6",
+    "jsdom": "^28.1.0",
+    "playwright": "^1.55.1",
     "postcss": "^8.5.8",
     "tailwindcss": "^3.4.17",
     "typescript": "^5",

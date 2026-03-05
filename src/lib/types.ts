@@ -19,6 +19,37 @@ export type ReminderTipoEvento =
   | "membresia_vence_1"
   | "service_control_30";
 
+export type HelpProcedureId =
+  | "operacion_general"
+  | "agenda_reserva"
+  | "agenda_pausar"
+  | "agenda_reactivar"
+  | "agenda_excepcion"
+  | "persistencia_check";
+
+export interface HelpStep {
+  id: string;
+  title: string;
+  description: string;
+  target: string;
+  tab?: "overview" | "auxilios" | "membresias" | "agenda" | "reminders" | "servicios";
+}
+
+export interface HelpAssetRef {
+  screenshot: string;
+  animation: string;
+  alt: string;
+}
+
+export interface HelpProcedure {
+  id: HelpProcedureId;
+  title: string;
+  summary: string;
+  assets: HelpAssetRef;
+  checklist: string[];
+  steps: HelpStep[];
+}
+
 export interface Suscriptor {
   id: string;
   nombre: string;

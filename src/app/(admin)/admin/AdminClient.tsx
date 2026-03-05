@@ -19,14 +19,15 @@ import {
   SkipForward,
   CheckCircle2,
   Plus,
+  LifeBuoy,
 } from "lucide-react";
 import Link from "next/link";
-import jsPDF from "jspdf";
 import type {
   AuxilioEstado,
   AuxilioPrioridad,
   AuxilioTipo,
   DashboardStats,
+  HelpProcedureId,
   MembresiaEstado,
   MembresiaRow,
   OperacionAuxilioItem,
@@ -43,6 +44,17 @@ import {
 import { AdminAgendaTab } from "@/components/AdminAgendaTab";
 import { CargaMasivaModal } from "@/components/CargaMasivaModal";
 import { MapView } from "@/components/MapView";
+import {
+  AdminHelpCenter,
+  type TourProgressSnapshot,
+} from "@/components/admin-help/AdminHelpCenter";
+import { AdminGuidedTour } from "@/components/admin-help/AdminGuidedTour";
+import {
+  HELP_TOUR_STORAGE_KEY,
+  getHelpProcedureById,
+  listHelpProcedures,
+} from "@/lib/help";
+import { generateOperationalReceiptPdf } from "@/lib/invoice/receipt";
 
 type AdminTab =
   | "overview"
@@ -414,6 +426,12 @@ export default function AdminClient({
   });
 
   const [serviciosSearch, setServiciosSearch] = useState("");
+  const helpProcedures = useMemo(() => listHelpProcedures(), []);
+  const [helpOpen, setHelpOpen] = useState(false);
+  const [tourProcedureId, setTourProcedureId] = useState<HelpProcedureId | null>(null);
+  const [tourStepIndex, setTourStepIndex] = useState(0);
+  const [tourOpen, setTourOpen] = useState(false);
+  const [tourProgress, setTourProgress] = useState<TourProgressSnapshot | null>(null);
 
   const refreshDashboard = useCallback(async () => {
     setLoadingDashboard(true);
@@ -562,6 +580,100 @@ export default function AdminClient({
     }
   };
 
+  const persistTourProgress = useCallback((snapshot: TourProgressSnapshot) => {
+    setTourProgress(snapshot);
+    if (typeof window === "undefined") return;
+    window.localStorage.setItem(HELP_TOUR_STORAGE_KEY, JSON.stringify(snapshot));
+  }, []);
+
+  useEffect(() => {
+    if (typeof window === "undefined") return;
+    const raw = window.localStorage.getItem(HELP_TOUR_STORAGE_KEY);
+    if (!raw) return;
+    try {
+      const parsed = JSON.parse(raw) as TourProgressSnapshot;
+      if (!parsed?.procedureId || typeof parsed.stepIndex !== "number") return;
+      setTourProgress(parsed);
+    } catch {
+      window.localStorage.removeItem(HELP_TOUR_STORAGE_KEY);
+    }
+  }, []);
+
+  const startTour = useCallback(
+    (procedureId: HelpProcedureId, mode: "start" | "resume") => {
+      const procedure = getHelpProcedureById(procedureId);
+      if (!procedure) return;
+
+      const shouldResume =
+        mode === "resume" &&
+        tourProgress &&
+        !tourProgress.completed &&
+        tourProgress.procedureId === procedureId;
+
+      const nextStep = shouldResume ? tourProgress.stepIndex : 0;
+      const boundedStep = Math.max(0, Math.min(nextStep, procedure.steps.length - 1));
+      const activeStep = procedure.steps[boundedStep];
+      if (activeStep?.tab) {
+        setActiveTab(activeStep.tab);
+      }
+
+      setTourProcedureId(procedureId);
+      setTourStepIndex(boundedStep);
+      setTourOpen(true);
+      setHelpOpen(false);
+      persistTourProgress({
+        procedureId,
+        stepIndex: boundedStep,
+        completed: false,
+        updatedAt: new Date().toISOString(),
+      });
+    },
+    [persistTourProgress, tourProgress]
+  );
+
+  const handleTourStepChange = useCallback(
+    (index: number) => {
+      if (!tourProcedureId) return;
+      const procedure = getHelpProcedureById(tourProcedureId);
+      if (!procedure) return;
+      const bounded = Math.max(0, Math.min(index, procedure.steps.length - 1));
+      setTourStepIndex(bounded);
+      persistTourProgress({
+        procedureId: tourProcedureId,
+        stepIndex: bounded,
+        completed: false,
+        updatedAt: new Date().toISOString(),
+      });
+    },
+    [persistTourProgress, tourProcedureId]
+  );
+
+  const closeTour = useCallback(() => {
+    setTourOpen(false);
+  }, []);
+
+  const resetTour = useCallback(() => {
+    if (!tourProcedureId) return;
+    setTourStepIndex(0);
+    persistTourProgress({
+      procedureId: tourProcedureId,
+      stepIndex: 0,
+      completed: false,
+      updatedAt: new Date().toISOString(),
+    });
+  }, [persistTourProgress, tourProcedureId]);
+
+  const completeTour = useCallback(() => {
+    if (!tourProcedureId) return;
+    persistTourProgress({
+      procedureId: tourProcedureId,
+      stepIndex: tourStepIndex,
+      completed: true,
+      updatedAt: new Date().toISOString(),
+    });
+    setTourOpen(false);
+  }, [persistTourProgress, tourProcedureId, tourStepIndex]);
+
   const tabs = [
     { id: "overview" as const, label: "Resumen", icon: TrendingUp },
     { id: "auxilios" as const, label: "Operaciones", icon: AlertTriangle },
@@ -571,8 +683,12 @@ export default function AdminClient({
     { id: "servicios" as const, label: "Servicios", icon: Wrench },
   ];
 
+  const activeTourProcedure = tourProcedureId
+    ? getHelpProcedureById(tourProcedureId) ?? null
+    : null;
+
   return (
-    <div className="min-h-screen pb-20 md:pb-0">
+    <div className="min-h-screen pb-20 md:pb-0" data-help-id="admin-root">
       <section className="px-4 pt-8 pb-4">
         <motion.div initial={{ opacity: 0, y: 8 }} animate={{ opacity: 1, y: 0 }} className="max-w-7xl mx-auto">
           <div className="flex items-center justify-between gap-3 flex-wrap">
@@ -587,11 +703,20 @@ export default function AdminClient({
                 Ir al sitio
               </Link>
               <button
+                onClick={() => setHelpOpen(true)}
+                className="btn-outline text-xs py-2 px-4 inline-flex items-center gap-2"
+                data-help-id="admin-help-button"
+              >
+                <LifeBuoy className="w-3 h-3" />
+                Ayuda operativa
+              </button>
+              <button
                 onClick={() => {
                   void Promise.all([refreshDashboard(), fetchOperaciones(), fetchMembresias(), fetchReminders()]);
                 }}
                 className="btn-outline text-xs py-2 px-4 flex items-center gap-2"
                 disabled={loadingDashboard || opsLoading || membresiasLoading || remindersLoading}
+                data-help-id="admin-refresh"
               >
                 <RefreshCw className="w-3 h-3" />
                 Actualizar todo
@@ -607,13 +732,14 @@ export default function AdminClient({
       </section>
 
       <section className="px-4 pb-4">
-        <div className="max-w-7xl mx-auto flex gap-1 overflow-x-auto scrollbar-hide">
+        <div className="max-w-7xl mx-auto flex gap-1 overflow-x-auto scrollbar-hide" data-help-id="admin-tabs">
           {tabs.map((tab) => {
             const Icon = tab.icon;
             return (
               <button
                 key={tab.id}
                 onClick={() => setActiveTab(tab.id)}
+                data-help-id={`admin-tab-${tab.id}`}
                 className={`flex items-center gap-2 px-4 py-2.5 rounded-xl text-sm font-medium whitespace-nowrap transition-all duration-300 ${
                   activeTab === tab.id
                     ? "bg-fede-accent text-white shadow-[0_0_20px_rgba(239,68,68,0.3)]"
@@ -728,6 +854,24 @@ export default function AdminClient({
         onSaved={async () => {
           await Promise.all([fetchMembresias(), refreshDashboard()]);
         }}
+      />
+
+      <AdminHelpCenter
+        isOpen={helpOpen}
+        procedures={helpProcedures}
+        progress={tourProgress}
+        onClose={() => setHelpOpen(false)}
+        onStartTour={startTour}
+      />
+
+      <AdminGuidedTour
+        procedure={tourOpen ? activeTourProcedure : null}
+        stepIndex={tourStepIndex}
+        onStepChange={handleTourStepChange}
+        onClose={closeTour}
+        onComplete={completeTour}
+        onReset={resetTour}
+        onNavigateTab={(tab) => setActiveTab(tab)}
       />
     </div>
   );
@@ -921,7 +1065,11 @@ function AuxiliosOperativosTab({
             <AlertTriangle className="w-4 h-4 text-fede-accent" />
             Operaciones de auxilio y traslado
           </div>
-          <button className="btn-primary text-xs py-2 px-3 flex items-center gap-1" onClick={onOpenCreate}>
+          <button
+            className="btn-primary text-xs py-2 px-3 flex items-center gap-1"
+            onClick={onOpenCreate}
+            data-help-id="auxilios-new-request"
+          >
             <Plus className="w-3 h-3" /> Nueva solicitud
           </button>
         </div>
@@ -1019,7 +1167,7 @@ function AuxiliosOperativosTab({
           </select>
         </div>
 
-        <div className="overflow-x-auto">
+        <div className="overflow-x-auto" data-help-id="auxilios-table">
           <table className="w-full text-sm">
             <thead>
               <tr className="text-left text-fede-muted border-b border-fede-border">
@@ -1569,7 +1717,7 @@ function RemindersTab({
         />
       </div>
 
-      <div className="space-y-2">
+      <div className="space-y-2" data-help-id="reminders-list">
         {loading ? (
           <p className="text-sm text-fede-muted">Cargando recordatorios...</p>
         ) : rows.length === 0 ? (
@@ -1666,61 +1814,16 @@ function ServiciosTab({
   onSearchChange: (value: string) => void;
   onNuevo: () => void;
 }) {
-  const handleGenerarRecibo = (servicio: ServicioRegistro) => {
-    const doc = new jsPDF();
-
-    doc.setFont("helvetica", "bold");
-    doc.setFontSize(22);
-    doc.setTextColor(239, 68, 68);
-    doc.text("Fede Moto Servicios", 20, 25);
-
-    doc.setFont("helvetica", "normal");
-    doc.setFontSize(10);
-    doc.setTextColor(100, 100, 100);
-    doc.text(`Fecha de emisión: ${new Date().toLocaleDateString()}`, 20, 35);
-    doc.text(`ID Transacción: ${servicio.id.split("-")[0].toUpperCase()}`, 130, 35);
-
-    doc.setDrawColor(200, 200, 200);
-    doc.line(20, 45, 190, 45);
-
-    doc.setFontSize(12);
-    doc.setTextColor(50, 50, 50);
-    doc.setFont("helvetica", "bold");
-    doc.text("Datos del Cliente:", 20, 60);
-
-    doc.setFont("helvetica", "normal");
-    doc.text(`Nombre: ${servicio.clienteNombre}`, 20, 70);
-    doc.text(`Vehículo: ${servicio.moto}`, 20, 80);
-
-    doc.setFillColor(245, 245, 245);
-    doc.rect(20, 95, 170, 10, "F");
-
-    doc.setFont("helvetica", "bold");
-    doc.text("CONCEPTO", 25, 102);
-    doc.text("IMPORTE", 160, 102);
-
-    doc.setFont("helvetica", "normal");
-    doc.text(servicio.servicio, 25, 120);
-    doc.text(`$ ${servicio.costo.toLocaleString()}`, 160, 120);
-
-    doc.line(20, 130, 190, 130);
-
-    doc.setFontSize(14);
-    doc.setFont("helvetica", "bold");
-    doc.text("TOTAL ABONADO:", 115, 145);
-    doc.setTextColor(239, 68, 68);
-    doc.text(`$ ${servicio.costo.toLocaleString()}`, 160, 145);
-
-    doc.setFontSize(10);
-    doc.setTextColor(150, 150, 150);
-    doc.setFont("helvetica", "italic");
-    doc.text(
-      "Gracias por confiar en Fede Moto Servicios. Especialistas en Alta Cilindrada.",
-      20,
-      180
-    );
-
-    doc.save(`Recibo_${servicio.clienteNombre.replace(/\s+/g, "_")}.pdf`);
+  const handleGenerarRecibo = async (servicio: ServicioRegistro) => {
+    try {
+      await generateOperationalReceiptPdf(servicio);
+    } catch (error) {
+      window.alert(
+        error instanceof Error
+          ? error.message
+          : "No se pudo generar el recibo. Reintentá en unos segundos."
+      );
+    }
   };
 
   const handleExportCSV = () => {
@@ -1788,7 +1891,10 @@ function ServiciosTab({
               <div className="mt-2">
                 <button
                   className="btn-outline text-[11px] px-2 py-1"
-                  onClick={() => handleGenerarRecibo(item)}
+                  onClick={() => {
+                    void handleGenerarRecibo(item);
+                  }}
+                  data-help-id="servicios-receipt-button"
                 >
                   Generar recibo PDF
                 </button>

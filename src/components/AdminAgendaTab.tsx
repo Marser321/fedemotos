@@ -337,7 +337,7 @@ export function AdminAgendaTab() {
       : "text-yellow-300 border-yellow-500/30 bg-yellow-500/10";
 
   return (
-    <div className="space-y-4">
+    <div className="space-y-4" data-help-id="agenda-root">
       <div className="glass-card p-4 flex flex-wrap items-center justify-between gap-2">
         <div>
           <p className="text-sm font-medium flex items-center gap-2">
@@ -366,7 +366,7 @@ export function AdminAgendaTab() {
       )}
 
       <div className="grid grid-cols-1 xl:grid-cols-2 gap-4">
-        <div className="glass-card p-4 space-y-3">
+        <div className="glass-card p-4 space-y-3" data-help-id="agenda-status-card">
           <div className="flex items-center justify-between">
             <p className="text-sm font-medium">Estado de agenda</p>
             {config && (
@@ -508,6 +508,7 @@ export function AdminAgendaTab() {
                 onClick={() => {
                   void saveConfig();
                 }}
+                data-help-id="agenda-status-save"
               >
                 {configSaving ? (
                   <Loader2 className="w-3 h-3 animate-spin" />
@@ -522,7 +523,7 @@ export function AdminAgendaTab() {
           )}
         </div>
 
-        <div className="glass-card p-4 space-y-3">
+        <div className="glass-card p-4 space-y-3" data-help-id="agenda-day-occupancy">
           <div className="flex items-center justify-between">
             <p className="text-sm font-medium">Ocupación por día</p>
             <input
@@ -560,7 +561,7 @@ export function AdminAgendaTab() {
         </div>
       </div>
 
-      <div className="glass-card p-4 space-y-3">
+      <div className="glass-card p-4 space-y-3" data-help-id="agenda-weekly-card">
         <div className="flex items-center justify-between">
           <p className="text-sm font-medium">Agenda semanal</p>
           <button
@@ -650,7 +651,7 @@ export function AdminAgendaTab() {
       </div>
 
       <div className="grid grid-cols-1 xl:grid-cols-2 gap-4">
-        <div className="glass-card p-4 space-y-3">
+        <div className="glass-card p-4 space-y-3" data-help-id="agenda-exceptions-form">
           <p className="text-sm font-medium">Excepciones por fecha</p>
           <form className="space-y-2" onSubmit={createException}>
             <div className="grid grid-cols-2 gap-2">
@@ -725,7 +726,7 @@ export function AdminAgendaTab() {
           </form>
         </div>
 
-        <div className="glass-card p-4 space-y-2 max-h-[380px] overflow-auto">
+        <div className="glass-card p-4 space-y-2 max-h-[380px] overflow-auto" data-help-id="agenda-exceptions-list">
           {exceptions.length === 0 ? (
             <p className="text-xs text-fede-muted">Sin excepciones cargadas.</p>
           ) : (
@@ -758,7 +759,7 @@ export function AdminAgendaTab() {
         </div>
       </div>
 
-      <div className="glass-card p-4 space-y-3">
+      <div className="glass-card p-4 space-y-3" data-help-id="agenda-turnos-table">
         <div className="grid grid-cols-1 md:grid-cols-5 gap-2">
           <input
             className="input-dark md:col-span-2"
@@ -922,4 +923,3 @@ export function AdminAgendaTab() {
     </div>
   );
 }
-

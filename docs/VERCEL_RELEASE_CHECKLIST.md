@@ -5,12 +5,11 @@
 Run all checks in this order:
 
 ```bash
-npm run lint
-npm run test
-npm run build
+npm run env:validate:profiles
+npm run test:release:staging
 ```
 
-All three must pass before deploy.
+If `test:release:staging` fails, release is blocked.
 
 ## 2) Required environment variables (Vercel)
 
@@ -27,22 +26,34 @@ Set these variables in Vercel Project Settings:
 - `OTP_PROVIDER` (current value: `email`)
 - `OTP_EMAIL_FROM`
 - `OTP_DEV_ECHO_CODE` (production: `false`)
+- `NEXT_PUBLIC_RECEIPT_ISSUER_NAME`
+- `NEXT_PUBLIC_RECEIPT_ISSUER_PHONE`
+- `NEXT_PUBLIC_RECEIPT_ISSUER_ADDRESS`
+- `E2E_STAGING_BASE_URL` (runner/CI)
+- `E2E_STAGING_ADMIN_PIN` (runner/CI)
+- `E2E_STAGING_SERVICE_ROLE_KEY` (runner/CI privado)
 
-### 2.1) Sync automático desde `.env.local`
+### 2.1) Sync seguro por perfil (sin mezcla de backends)
 
-Si querés replicar exactamente las variables locales en Vercel (`production`, `preview`, `development`):
+Usar dos archivos locales separados:
+
+- `.env.production.local` (backend productivo)
+- `.env.staging.local` (backend staging)
+
+Sincronizar con scripts específicos:
 
 ```bash
-npm run vercel:env:sync
+npm run vercel:env:sync:production
+npm run vercel:env:sync:staging
 ```
 
-Este script:
+Guardrails aplicados:
 
-- valida claves requeridas en `.env.local`
-- hace overwrite en Vercel con `--force`
-- fuerza `OTP_DEV_ECHO_CODE=false` en `production` como guardrail de seguridad
-- verifica presencia final por entorno (`vercel env ls --format json`)
-- advierte si `OTP_PROVIDER != email`
+- falla si `NEXT_PUBLIC_INSFORGE_URL` de staging y production coinciden.
+- `staging` solo sincroniza `preview/development`.
+- `production` solo sincroniza `production`.
+- fuerza `OTP_DEV_ECHO_CODE=false` en `production`.
+- valida presencia de claves por target con `vercel env ls --format json`.
 
 ## 3) Deploy
 
@@ -50,7 +61,7 @@ Deploy from Vercel dashboard or CLI after verifying env vars.
 
 ## 4) Post-deploy smoke
 
-Run smoke checks against production URL:
+Run smoke checks against target URL:
 
 ```bash
 SMOKE_BASE_URL=https://your-vercel-domain.vercel.app npm run test:smoke
@@ -68,6 +79,20 @@ Smoke script validates:
 - Admin lookup endpoint protegido (`/api/admin/clientes/lookup`).
 - Recordatorios admin protegidos y con error tipado (`FORBIDDEN`) sin sesión.
 - Configuración de agenda admin protegida (`/api/admin/agenda/config` sin sesión => 403).
+
+## 4.2) Evidencia de ayuda y staging
+
+```bash
+npm run help:capture:staging
+npm run test:e2e:staging
+npm run test:db:staging
+```
+
+Evidencia generada:
+
+- `public/help/admin/...` (capturas versionadas del centro de ayuda)
+- `artifacts/staging/e2e/report.json`
+- `artifacts/staging/db/db-verification.json`
 
 ## 4.1) Cron operativo de recordatorios
 

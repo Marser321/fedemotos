@@ -1,0 +1,26 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 640 280" role="img" aria-label="Animacion persistencia confirmada">
+  <defs>
+    <style>
+      .ping { animation: ping 2s ease-in-out infinite; transform-origin: center; }
+      .sync { animation: sync 2.8s linear infinite; }
+      @keyframes ping { 0%,100% { opacity: .3; } 50% { opacity: 1; } }
+      @keyframes sync { from { transform: rotate(0deg);} to { transform: rotate(360deg);} }
+    </style>
+  </defs>
+  <rect width="640" height="280" fill="#0f0f0f"/>
+  <rect x="34" y="30" width="572" height="220" rx="14" fill="#121212" stroke="#333"/>
+  <rect x="60" y="58" width="220" height="162" rx="12" fill="#171717" stroke="#2e2e2e"/>
+  <rect x="78" y="80" width="90" height="14" rx="7" fill="#ef4444" class="ping"/>
+  <rect x="78" y="110" width="184" height="10" rx="5" fill="#303030"/>
+  <rect x="78" y="128" width="164" height="10" rx="5" fill="#303030"/>
+  <rect x="78" y="146" width="172" height="10" rx="5" fill="#303030"/>
+  <rect x="360" y="58" width="220" height="162" rx="12" fill="#171717" stroke="#2e2e2e"/>
+  <rect x="378" y="80" width="104" height="14" rx="7" fill="#22c55e" class="ping"/>
+  <rect x="378" y="110" width="184" height="10" rx="5" fill="#304030"/>
+  <rect x="378" y="128" width="164" height="10" rx="5" fill="#304030"/>
+  <circle cx="320" cy="140" r="30" fill="#161616" stroke="#ef4444"/>
+  <g class="sync" transform="translate(320 140)">
+    <path d="M-10 -16 A20 20 0 0 1 16 -6" fill="none" stroke="#ef4444" stroke-width="4" stroke-linecap="round"/>
+    <path d="M10 16 A20 20 0 0 1 -16 6" fill="none" stroke="#22c55e" stroke-width="4" stroke-linecap="round"/>
+  </g>
+</svg>
