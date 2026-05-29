@@ -1,8 +1,31 @@
 "use client";
 
 import dynamic from "next/dynamic";
-import { useEffect, useState } from "react";
+import { Component, useEffect, useState, type ReactNode } from "react";
 import type { LeafletMouseEvent, Map as LeafletMap } from "leaflet";
+
+// Si Leaflet o sus chunks fallan al cargar/renderizar, evitamos que el error
+// tumbe la página entera y mostramos un fallback legible.
+class MapErrorBoundary extends Component<{ children: ReactNode }, { hasError: boolean }> {
+    state = { hasError: false };
+
+    static getDerivedStateFromError() {
+        return { hasError: true };
+    }
+
+    render() {
+        if (this.state.hasError) {
+            return (
+                <div className="h-full w-full bg-fede-card rounded-2xl flex items-center justify-center border border-fede-border p-4 text-center">
+                    <span className="text-sm text-fede-muted">
+                        No se pudo cargar el mapa. Revisá tu conexión e intentá de nuevo.
+                    </span>
+                </div>
+            );
+        }
+        return this.props.children;
+    }
+}
 
 // Leaflet requiere acceso al DOM, lo cargamos dinámicamente sin SSR
 const MapContainer = dynamic(
@@ -88,6 +111,7 @@ export function MapView({
                 integrity="sha256-p4NxAoJBhIIN+hmNHrzRCf9tD/miZyoHS5obTRR9BMY="
                 crossOrigin=""
             />
+            <MapErrorBoundary>
             <MapContainer
                 center={center}
                 zoom={zoom}
@@ -124,6 +148,7 @@ export function MapView({
                     </Marker>
                 )}
             </MapContainer>
+            </MapErrorBoundary>
         </div>
     );
 }

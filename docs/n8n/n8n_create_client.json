@@ -1,0 +1,90 @@
+{
+    "name": "API Crear Cliente (CSV)",
+    "nodes": [
+        {
+            "parameters": {
+                "httpMethod": "POST",
+                "path": "api/clientes",
+                "options": {}
+            },
+            "name": "Webhook POST Cliente",
+            "type": "n8n-nodes-base.webhook",
+            "typeVersion": 1,
+            "position": [
+                200,
+                300
+            ]
+        },
+        {
+            "parameters": {
+                "keepOnlySet": true,
+                "values": {
+                    "string": [
+                        {
+                            "name": "Cliente_ID",
+                            "value": "={{ 'CLI_' + Math.floor(Math.random() * 1000) }}"
+                        },
+                        {
+                            "name": "Nombre_Completo",
+                            "value": "={{ $json.body.nombre }}"
+                        },
+                        {
+                            "name": "Telefono",
+                            "value": "={{ $json.body.telefono }}"
+                        },
+                        {
+                            "name": "Matricula_Ref",
+                            "value": "={{ $json.body.matricula }}"
+                        }
+                    ]
+                },
+                "options": {}
+            },
+            "name": "Formatear Datos",
+            "type": "n8n-nodes-base.set",
+            "typeVersion": 1,
+            "position": [
+                400,
+                300
+            ]
+        },
+        {
+            "parameters": {
+                "operation": "append",
+                "fileName": "/data/clientes.csv",
+                "options": {}
+            },
+            "name": "Escribir en CSV",
+            "type": "n8n-nodes-base.spreadsheetFile",
+            "typeVersion": 1,
+            "position": [
+                600,
+                300
+            ]
+        }
+    ],
+    "connections": {
+        "Webhook POST Cliente": {
+            "main": [
+                [
+                    {
+                        "node": "Formatear Datos",
+                        "type": "main",
+                        "index": 0
+                    }
+                ]
+            ]
+        },
+        "Formatear Datos": {
+            "main": [
+                [
+                    {
+                        "node": "Escribir en CSV",
+                        "type": "main",
+                        "index": 0
+                    }
+                ]
+            ]
+        }
+    }
+}

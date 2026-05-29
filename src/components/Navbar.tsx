@@ -35,10 +35,18 @@ export function Navbar() {
     const [sesion, setSesion] = useState<Sesion>({ authenticated: false });
 
     useEffect(() => {
+        let active = true;
         fetch("/api/auth/sesion")
-            .then((r) => r.json())
-            .then(setSesion)
-            .catch(() => setSesion({ authenticated: false }));
+            .then((r) => (r.ok ? r.json() : null))
+            .then((data) => {
+                if (active && data) setSesion(data);
+            })
+            // Error de red transitorio: mantener el estado actual en vez de forzar
+            // "no autenticado", para no ocultar una sesión válida por un blip de red.
+            .catch(() => {});
+        return () => {
+            active = false;
+        };
     }, [pathname]); // Re-check on navigation
 
     const handleLogout = async () => {
@@ -69,7 +77,7 @@ export function Navbar() {
                 <div className="max-w-7xl mx-auto px-4 h-16 flex items-center justify-between">
                     {/* Logo */}
                     <Link href="/" className="flex items-center gap-2 group">
-                        <div className="w-9 h-9 rounded-lg bg-white/5 border border-fede-border flex items-center justify-center overflow-hidden group-hover:shadow-[0_0_20px_rgba(239,68,68,0.35)] transition-all duration-300">
+                        <div className="w-9 h-9 rounded-lg bg-white/5 border border-fede-border flex items-center justify-center overflow-hidden group-hover:shadow-[0_0_20px_rgba(172,28,29,0.35)] transition-all duration-300">
                             <Image
                                 src="/branding/logo-rayo.png"
                                 alt="Fede Motos"
@@ -121,7 +129,7 @@ export function Navbar() {
                                 </Link>
                                 <button
                                     onClick={handleLogout}
-                                    className="p-2 rounded-lg text-fede-muted hover:text-red-400 hover:bg-red-500/10 transition-all"
+                                    className="p-2 rounded-lg text-fede-muted hover:text-red-300 hover:bg-red-500/10 transition-all"
                                     title="Cerrar sesión"
                                 >
                                     <LogOut className="w-4 h-4" />
@@ -168,7 +176,7 @@ export function Navbar() {
                                         key={item.href}
                                         href={item.href}
                                         onClick={() => setIsOpen(false)}
-                                        className={`flex items-center gap-3 px-4 py-3 rounded-xl text-base font-medium transition-all duration-300 ${isActive
+                                        className={`flex items-center gap-3 px-4 py-3 rounded-lg text-base font-medium transition-all duration-300 ${isActive
                                             ? "bg-fede-accent/15 text-fede-accent"
                                             : "text-fede-muted hover:text-white hover:bg-white/5"
                                             }`}
@@ -187,14 +195,14 @@ export function Navbar() {
                                     <Link
                                         href={cuentaLink.href}
                                         onClick={() => setIsOpen(false)}
-                                        className="flex items-center gap-3 px-4 py-3 rounded-xl text-base font-medium text-fede-muted hover:text-white hover:bg-white/5 transition-all"
+                                        className="flex items-center gap-3 px-4 py-3 rounded-lg text-base font-medium text-fede-muted hover:text-white hover:bg-white/5 transition-all"
                                     >
                                         <cuentaLink.icon className="w-5 h-5" />
                                         {cuentaLink.label}
                                     </Link>
                                     <button
                                         onClick={() => { handleLogout(); setIsOpen(false); }}
-                                        className="flex items-center gap-3 px-4 py-3 rounded-xl text-base font-medium text-red-400 hover:bg-red-500/10 transition-all"
+                                        className="flex items-center gap-3 px-4 py-3 rounded-lg text-base font-medium text-red-300 hover:bg-red-500/10 transition-all"
                                     >
                                         <LogOut className="w-5 h-5" />
                                         Cerrar Sesión
@@ -204,7 +212,7 @@ export function Navbar() {
                                 <Link
                                     href="/login"
                                     onClick={() => setIsOpen(false)}
-                                    className="flex items-center gap-3 px-4 py-3 rounded-xl text-base font-medium text-fede-accent hover:bg-fede-accent/10 transition-all"
+                                    className="flex items-center gap-3 px-4 py-3 rounded-lg text-base font-medium text-fede-accent hover:bg-fede-accent/10 transition-all"
                                 >
                                     <LogIn className="w-5 h-5" />
                                     Iniciar Sesión
@@ -230,7 +238,7 @@ export function Navbar() {
                                     : "text-fede-muted hover:text-white"
                                     }`}
                             >
-                                <Icon className={`w-5 h-5 ${isActive ? "drop-shadow-[0_0_8px_rgba(239,68,68,0.6)]" : ""}`} />
+                                <Icon className={`w-5 h-5 ${isActive ? "drop-shadow-[0_0_8px_rgba(172,28,29,0.6)]" : ""}`} />
                                 <span className="text-[10px] font-medium">{item.label}</span>
                             </Link>
                         );
@@ -243,7 +251,7 @@ export function Navbar() {
                             : "text-fede-muted hover:text-white"
                             }`}
                     >
-                        <cuentaLink.icon className={`w-5 h-5 ${pathname === cuentaLink.href ? "drop-shadow-[0_0_8px_rgba(239,68,68,0.6)]" : ""}`} />
+                        <cuentaLink.icon className={`w-5 h-5 ${pathname === cuentaLink.href ? "drop-shadow-[0_0_8px_rgba(172,28,29,0.6)]" : ""}`} />
                         <span className="text-[10px] font-medium">
                             {sesion.authenticated ? (sesion.role === "admin" ? "Admin" : "Cuenta") : "Entrar"}
                         </span>

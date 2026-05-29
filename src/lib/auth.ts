@@ -29,14 +29,11 @@ export function getAdminPin(): string {
 }
 
 export function safeConstantCompare(a: string, b: string): boolean {
-  const left = Buffer.from(a, "utf8");
-  const right = Buffer.from(b, "utf8");
+  const secret = getSessionSecret();
+  const hashA = createHmac("sha256", secret).update(a, "utf8").digest();
+  const hashB = createHmac("sha256", secret).update(b, "utf8").digest();
 
-  if (left.length !== right.length) {
-    return false;
-  }
-
-  return timingSafeEqual(left, right);
+  return timingSafeEqual(hashA, hashB);
 }
 
 function serializeSessionToken(payload: SessionPayload): string {

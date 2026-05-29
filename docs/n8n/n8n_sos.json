@@ -1,0 +1,112 @@
+{
+    "name": "Webhook SOS",
+    "nodes": [
+        {
+            "parameters": {
+                "httpMethod": "POST",
+                "path": "webhook/sos",
+                "options": {}
+            },
+            "name": "Webhook SOS",
+            "type": "n8n-nodes-base.webhook",
+            "typeVersion": 1,
+            "position": [
+                250,
+                300
+            ],
+            "webhookId": "sos-webhook"
+        },
+        {
+            "parameters": {
+                "operation": "append",
+                "documentId": {
+                    "__rl": true,
+                    "value": "/data/historial_auxilios.csv",
+                    "mode": "url"
+                },
+                "sheetName": {
+                    "__rl": true,
+                    "value": "gid=0",
+                    "mode": "list"
+                },
+                "columns": {
+                    "mappingMode": "defineBelow",
+                    "value": {
+                        "structure": [
+                            {
+                                "id": "matricula",
+                                "name": "Matricula",
+                                "value": "={{ $json.body.matricula }}"
+                            },
+                            {
+                                "id": "lat",
+                                "name": "Latitud",
+                                "value": "={{ $json.body.lat }}"
+                            },
+                            {
+                                "id": "long",
+                                "name": "Longitud",
+                                "value": "={{ $json.body.long }}"
+                            },
+                            {
+                                "id": "map",
+                                "name": "Google Maps",
+                                "value": "={{ $json.body.mapsLink }}"
+                            },
+                            {
+                                "id": "fecha",
+                                "name": "Fecha Hora",
+                                "value": "={{ new Date().toISOString() }}"
+                            }
+                        ]
+                    }
+                },
+                "options": {}
+            },
+            "name": "Guardar SOS en CSV",
+            "type": "n8n-nodes-base.spreadsheetFile",
+            "typeVersion": 4.5,
+            "position": [
+                450,
+                300
+            ]
+        },
+        {
+            "parameters": {
+                "respondWith": "json",
+                "responseBody": "={{ { success: true, message: 'Ayuda enviada' } }}"
+            },
+            "name": "Responder OK",
+            "type": "n8n-nodes-base.respondToWebhook",
+            "typeVersion": 1.1,
+            "position": [
+                650,
+                300
+            ]
+        }
+    ],
+    "connections": {
+        "Webhook SOS": {
+            "main": [
+                [
+                    {
+                        "node": "Guardar SOS en CSV",
+                        "type": "main",
+                        "index": 0
+                    }
+                ]
+            ]
+        },
+        "Guardar SOS en CSV": {
+            "main": [
+                [
+                    {
+                        "node": "Responder OK",
+                        "type": "main",
+                        "index": 0
+                    }
+                ]
+            ]
+        }
+    }
+}

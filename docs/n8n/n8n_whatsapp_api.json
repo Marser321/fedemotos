@@ -1,0 +1,169 @@
+{
+    "name": "WhatsApp API Gateway",
+    "nodes": [
+        {
+            "parameters": {
+                "path": "api/whatsapp/send",
+                "httpMethod": "POST",
+                "responseMode": "lastNode",
+                "options": {}
+            },
+            "name": "Webhook Enviar WhatsApp",
+            "type": "n8n-nodes-base.webhook",
+            "typeVersion": 2,
+            "position": [
+                200,
+                300
+            ],
+            "webhookId": "whatsapp-send"
+        },
+        {
+            "parameters": {
+                "assignments": {
+                    "assignments": [
+                        {
+                            "id": "phone",
+                            "name": "phone",
+                            "value": "={{ $json.body.phone.replace(/\\D/g, '') }}",
+                            "type": "string"
+                        },
+                        {
+                            "id": "message",
+                            "name": "message",
+                            "value": "={{ $json.body.message }}",
+                            "type": "string"
+                        },
+                        {
+                            "id": "type",
+                            "name": "type",
+                            "value": "={{ $json.body.type || 'generic' }}",
+                            "type": "string"
+                        }
+                    ]
+                },
+                "options": {}
+            },
+            "name": "Preparar Datos",
+            "type": "n8n-nodes-base.set",
+            "typeVersion": 3.4,
+            "position": [
+                400,
+                300
+            ]
+        },
+        {
+            "parameters": {
+                "method": "POST",
+                "url": "={{ $env.WHATSAPP_API_URL || 'http://localhost:3000/api/sendText' }}",
+                "authentication": "genericCredentialType",
+                "genericAuthType": "httpHeaderAuth",
+                "sendHeaders": true,
+                "headerParameters": {
+                    "parameters": [
+                        {
+                            "name": "Content-Type",
+                            "value": "application/json"
+                        }
+                    ]
+                },
+                "sendBody": true,
+                "specifyBody": "json",
+                "jsonBody": "={\n  \"chatId\": \"{{ $json.phone }}@c.us\",\n  \"text\": \"{{ $json.message }}\",\n  \"session\": \"{{ $env.WHATSAPP_SESSION || 'default' }}\"\n}",
+                "options": {
+                    "timeout": 10000
+                }
+            },
+            "name": "Enviar via WAHA API",
+            "type": "n8n-nodes-base.httpRequest",
+            "typeVersion": 4.2,
+            "position": [
+                600,
+                200
+            ]
+        },
+        {
+            "parameters": {
+                "method": "POST",
+                "url": "https://graph.facebook.com/v18.0/{{ $env.WHATSAPP_PHONE_ID }}/messages",
+                "authentication": "genericCredentialType",
+                "genericAuthType": "httpHeaderAuth",
+                "sendHeaders": true,
+                "headerParameters": {
+                    "parameters": [
+                        {
+                            "name": "Authorization",
+                            "value": "Bearer {{ $env.WHATSAPP_TOKEN }}"
+                        },
+                        {
+                            "name": "Content-Type",
+                            "value": "application/json"
+                        }
+                    ]
+                },
+                "sendBody": true,
+                "specifyBody": "json",
+                "jsonBody": "={\n  \"messaging_product\": \"whatsapp\",\n  \"to\": \"{{ $json.phone }}\",\n  \"type\": \"text\",\n  \"text\": { \"body\": \"{{ $json.message }}\" }\n}",
+                "options": {}
+            },
+            "name": "Enviar via Meta API",
+            "type": "n8n-nodes-base.httpRequest",
+            "typeVersion": 4.2,
+            "position": [
+                600,
+                400
+            ],
+            "disabled": true
+        },
+        {
+            "parameters": {
+                "respondWith": "json",
+                "responseBody": "={{ { success: true, message: 'WhatsApp enviado', phone: $json.phone } }}"
+            },
+            "name": "Respuesta OK",
+            "type": "n8n-nodes-base.respondToWebhook",
+            "typeVersion": 1.1,
+            "position": [
+                800,
+                300
+            ]
+        }
+    ],
+    "connections": {
+        "Webhook Enviar WhatsApp": {
+            "main": [
+                [
+                    {
+                        "node": "Preparar Datos",
+                        "type": "main",
+                        "index": 0
+                    }
+                ]
+            ]
+        },
+        "Preparar Datos": {
+            "main": [
+                [
+                    {
+                        "node": "Enviar via WAHA API",
+                        "type": "main",
+                        "index": 0
+                    }
+                ]
+            ]
+        },
+        "Enviar via WAHA API": {
+            "main": [
+                [
+                    {
+                        "node": "Respuesta OK",
+                        "type": "main",
+                        "index": 0
+                    }
+                ]
+            ]
+        }
+    },
+    "settings": {
+        "executionOrder": "v1"
+    }
+}

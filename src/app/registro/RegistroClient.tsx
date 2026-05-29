@@ -111,7 +111,7 @@ export default function RegistroClient() {
 
   return (
     <div className="min-h-screen flex items-center justify-center px-4 py-12 relative">
-      <div className="absolute inset-0 bg-[radial-gradient(circle_at_50%_30%,rgba(239,68,68,0.08),transparent_60%)]" />
+      <div className="absolute inset-0 bg-[radial-gradient(circle_at_50%_30%,rgba(172,28,29,0.09),transparent_60%)]" />
 
       <motion.div
         initial={{ opacity: 0, y: 20 }}
@@ -120,7 +120,7 @@ export default function RegistroClient() {
         className="relative z-10 w-full max-w-sm"
       >
         <div className="flex flex-col items-center mb-8">
-          <div className="w-16 h-16 rounded-2xl bg-white/5 border border-fede-border flex items-center justify-center shadow-[0_0_40px_rgba(239,68,68,0.2)] mb-4 overflow-hidden">
+          <div className="w-16 h-16 rounded-lg bg-white/5 border border-fede-border flex items-center justify-center shadow-[0_0_40px_rgba(172,28,29,0.24)] mb-4 overflow-hidden">
             <Image src="/branding/logo-rayo.png" alt="Fede Motos" width={46} height={46} />
           </div>
           <h1 className="text-xl font-bold">
@@ -237,7 +237,7 @@ export default function RegistroClient() {
               </div>
 
               {error && (
-                <div className="flex items-center gap-2 text-red-400 text-sm bg-red-500/10 border border-red-500/20 rounded-xl px-4 py-3">
+                <div className="flex items-center gap-2 text-red-300 text-sm bg-red-500/10 border border-red-500/20 rounded-lg px-4 py-3">
                   <AlertTriangle className="w-4 h-4 flex-shrink-0" />
                   {error}
                 </div>
@@ -298,7 +298,7 @@ export default function RegistroClient() {
               ) : null}
 
               {error && (
-                <div className="flex items-center gap-2 text-red-400 text-sm bg-red-500/10 border border-red-500/20 rounded-xl px-4 py-3">
+                <div className="flex items-center gap-2 text-red-300 text-sm bg-red-500/10 border border-red-500/20 rounded-lg px-4 py-3">
                   <AlertTriangle className="w-4 h-4 flex-shrink-0" />
                   {error}
                 </div>
@@ -352,7 +352,7 @@ export default function RegistroClient() {
 
         <p className="text-center text-fede-muted text-sm mt-6">
           ¿Ya tenés cuenta?{" "}
-          <Link href="/login" className="text-fede-accent hover:text-red-400 transition-colors font-medium">
+          <Link href="/login" className="text-fede-accent hover:text-fede-accent-glow transition-colors font-medium">
             Iniciá sesión
           </Link>
         </p>

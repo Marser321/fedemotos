@@ -1,0 +1,102 @@
+{
+    "name": "Check Expirations (Cron)",
+    "nodes": [
+        {
+            "parameters": {
+                "triggerTimes": {
+                    "item": [
+                        {
+                            "mode": "everyDay",
+                            "hour": 9
+                        }
+                    ]
+                }
+            },
+            "name": "Cron Diario (9am)",
+            "type": "n8n-nodes-base.cron",
+            "typeVersion": 1,
+            "position": [
+                250,
+                300
+            ]
+        },
+        {
+            "parameters": {
+                "operation": "read",
+                "fileSelector": "/data/clientes.csv",
+                "options": {}
+            },
+            "name": "Leer Clientes CSV",
+            "type": "n8n-nodes-base.spreadsheetFile",
+            "typeVersion": 4.5,
+            "position": [
+                450,
+                300
+            ]
+        },
+        {
+            "parameters": {
+                "jsCode": "const hoy = new Date();\nconst items = $input.all();\nconst porVencer = [];\n\nfor (const item of items) {\n  const cliente = item.json;\n  if (cliente.fecha_vencimiento) {\n    const vence = new Date(cliente.fecha_vencimiento);\n    const diffTime = vence - hoy;\n    const diffDays = Math.ceil(diffTime / (1000 * 60 * 60 * 24));\n    \n    // Avisar si faltan exactamente 7 días o 3 días\n    if (diffDays === 7 || diffDays === 3) {\n      cliente.dias_restantes = diffDays;\n      porVencer.push({ json: cliente });\n    }\n  }\n}\n\nreturn porVencer;"
+            },
+            "name": "Filtrar por Vencer",
+            "type": "n8n-nodes-base.code",
+            "typeVersion": 2,
+            "position": [
+                650,
+                300
+            ]
+        },
+        {
+            "parameters": {
+                "authentication": "headerAuth",
+                "requestMethod": "POST",
+                "url": "https://api.whatsapp-provider.com/send",
+                "jsonParameters": true,
+                "options": {},
+                "bodyParametersJson": "{\n  \"phone\": \"{{ $json.telefono }}\",\n  \"message\": \"¡Hola {{ $json.nombre }}! 👋\\n\\nTe recordamos que tu plan de Auxilio Mecánico vence en *{{ $json.dias_restantes }} días* ({{ $json.fecha_vencimiento }}).\\n\\nNo te quedes sin cobertura. Responde este mensaje para renovar tu suscripción y seguir viajando tranquilo. 🏍️\"\n}"
+            },
+            "name": "Enviar Alerta WhatsApp",
+            "type": "n8n-nodes-base.httpRequest",
+            "typeVersion": 1,
+            "position": [
+                850,
+                300
+            ]
+        }
+    ],
+    "connections": {
+        "Cron Diario (9am)": {
+            "main": [
+                [
+                    {
+                        "node": "Leer Clientes CSV",
+                        "type": "main",
+                        "index": 0
+                    }
+                ]
+            ]
+        },
+        "Leer Clientes CSV": {
+            "main": [
+                [
+                    {
+                        "node": "Filtrar por Vencer",
+                        "type": "main",
+                        "index": 0
+                    }
+                ]
+            ]
+        },
+        "Filtrar por Vencer": {
+            "main": [
+                [
+                    {
+                        "node": "Enviar Alerta WhatsApp",
+                        "type": "main",
+                        "index": 0
+                    }
+                ]
+            ]
+        }
+    }
+}

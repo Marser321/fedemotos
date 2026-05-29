@@ -1,159 +1,85 @@
 "use client";
 
-import { useCallback, useEffect, useMemo, useState } from "react";
+import { useEffect, useState } from "react";
 import { motion } from "framer-motion";
 import {
   Users,
   AlertTriangle,
-  CalendarDays,
   Wrench,
   DollarSign,
   Clock,
   MapPin,
-  TrendingUp,
   Download,
   Bell,
-  RefreshCw,
   Search,
   MessageCircle,
   SkipForward,
   CheckCircle2,
   Plus,
-  LifeBuoy,
 } from "lucide-react";
-import Link from "next/link";
 import type {
   AuxilioEstado,
   AuxilioPrioridad,
   AuxilioTipo,
   DashboardStats,
-  HelpProcedureId,
   MembresiaEstado,
   MembresiaRow,
   OperacionAuxilioItem,
   ReminderQueueItem,
   ServicioRegistro,
   SolicitudAuxilio,
-  Suscriptor,
 } from "@/lib/types";
-import {
-  CargarServicioModal,
-  NuevaMembresiaModal,
-  NuevaOperacionModal,
-} from "@/components/AdminModals";
-import { AdminAgendaTab } from "@/components/AdminAgendaTab";
-import { CargaMasivaModal } from "@/components/CargaMasivaModal";
 import { MapView } from "@/components/MapView";
-import {
-  AdminHelpCenter,
-  type TourProgressSnapshot,
-} from "@/components/admin-help/AdminHelpCenter";
-import { AdminGuidedTour } from "@/components/admin-help/AdminGuidedTour";
-import {
-  HELP_TOUR_STORAGE_KEY,
-  getHelpProcedureById,
-  listHelpProcedures,
-} from "@/lib/help";
 import { generateOperationalReceiptPdf } from "@/lib/invoice/receipt";
+import {
+  buildOperationMapsLink,
+  buildWhatsAppDispatchLink,
+  normalizeReminderType,
+  parseApiResponse,
+} from "./_shared";
 
-type AdminTab =
-  | "overview"
-  | "auxilios"
-  | "membresias"
-  | "agenda"
-  | "reminders"
-  | "servicios";
-
-interface DashboardApiResponse {
-  ok: true;
-  suscriptores: Suscriptor[];
-  solicitudes: SolicitudAuxilio[];
-  servicios: ServicioRegistro[];
-  stats: DashboardStats;
+function StatMini({ label, value }: { label: string; value: number }) {
+  return (
+    <div className="glass-card p-3">
+      <p className="text-xs text-fede-muted">{label}</p>
+      <p className="text-lg font-bold">{value}</p>
+    </div>
+  );
 }
 
-interface OperacionesApiResponse {
-  ok: true;
-  data: OperacionAuxilioItem[];
+function Pagination({
+  pagination,
+  onPageChange,
+}: {
   pagination: { page: number; pageSize: number; total: number; totalPages: number };
-  counters: {
-    total: number;
-    pendientes: number;
-    enCamino: number;
-    completados: number;
-    auxilios: number;
-    traslados: number;
-  };
+  onPageChange: (page: number) => void;
+}) {
+  return (
+    <div className="flex items-center justify-between pt-2 text-xs text-fede-muted">
+      <span>
+        Página {pagination.page} de {pagination.totalPages} · {pagination.total} registros
+      </span>
+      <div className="flex gap-2">
+        <button
+          className="btn-outline text-[11px] px-2 py-1"
+          disabled={pagination.page <= 1}
+          onClick={() => onPageChange(pagination.page - 1)}
+        >
+          Anterior
+        </button>
+        <button
+          className="btn-outline text-[11px] px-2 py-1"
+          disabled={pagination.page >= pagination.totalPages}
+          onClick={() => onPageChange(pagination.page + 1)}
+        >
+          Siguiente
+        </button>
+      </div>
+    </div>
+  );
 }
 
-interface MembresiasApiResponse {
-  ok: true;
-  data: MembresiaRow[];
-  pagination: { page: number; pageSize: number; total: number; totalPages: number };
-  resumen: {
-    total: number;
-    vencidas: number;
-    proximas: number;
-    activas: number;
-    inactivas: number;
-  };
-}
-
-interface RemindersApiResponse {
-  ok: true;
-  data: ReminderQueueItem[];
-  pagination: { page: number; pageSize: number; total: number; totalPages: number };
-}
-
-interface ApiErrorResponse {
-  ok?: boolean;
-  error?: {
-    message?: string;
-  };
-}
-
-interface AdminClientProps {
-  initialSolicitudes: SolicitudAuxilio[];
-  initialServicios: ServicioRegistro[];
-  initialStats: DashboardStats;
-  initialError?: string;
-}
-
-async function parseApiResponse<T>(response: Response): Promise<T> {
-  const json = (await response.json()) as T & ApiErrorResponse;
-  if (!response.ok || json.ok === false) {
-    throw new Error(json.error?.message || "Error inesperado");
-  }
-  return json as T;
-}
-
-function buildQuery(params: Record<string, string | number | undefined>) {
-  const search = new URLSearchParams();
-  for (const [key, value] of Object.entries(params)) {
-    if (value === undefined) continue;
-    const text = String(value).trim();
-    if (!text) continue;
-    search.set(key, text);
-  }
-  return search.toString();
-}
-
-function normalizeReminderType(tipo: string): string {
-  if (tipo === "service_control_30") return "Service 30 días";
-  if (tipo === "membresia_vence_7") return "Membresía vence en 7 días";
-  if (tipo === "membresia_vence_3") return "Membresía vence en 3 días";
-  if (tipo === "membresia_vence_1") return "Membresía vence mañana";
-  return tipo;
-}
-
-function buildOperationMapsLink(item: OperacionAuxilioItem): string {
-  if (item.tipo === "traslado" && item.destino) {
-    return `https://www.google.com/maps/dir/?api=1&origin=${item.origen.lat},${item.origen.lng}&destination=${item.destino.lat},${item.destino.lng}`;
-  }
-  return `https://www.google.com/maps/search/?api=1&query=${item.origen.lat},${item.origen.lng}`;
-}
-
-function MembershipEditModal({
+export function MembershipEditModal({
   isOpen,
   onClose,
   membership,
@@ -325,559 +251,7 @@ function MembershipEditModal({
   );
 }
 
-export default function AdminClient({
-  initialSolicitudes,
-  initialServicios,
-  initialStats,
-  initialError,
-}: AdminClientProps) {
-  const [activeTab, setActiveTab] = useState<AdminTab>("overview");
-
-  const [solicitudes, setSolicitudes] = useState(initialSolicitudes);
-  const [servicios, setServicios] = useState(initialServicios);
-  const [stats, setStats] = useState(initialStats);
-
-  const [uiError, setUiError] = useState(initialError || "");
-  const [loadingDashboard, setLoadingDashboard] = useState(false);
-
-  const [modalMembresia, setModalMembresia] = useState(false);
-  const [modalServicio, setModalServicio] = useState(false);
-  const [modalCargaMasiva, setModalCargaMasiva] = useState(false);
-  const [modalOperacion, setModalOperacion] = useState(false);
-
-  const [editingMembership, setEditingMembership] = useState<MembresiaRow | null>(null);
-
-  const [operaciones, setOperaciones] = useState<OperacionAuxilioItem[]>([]);
-  const [opsPagination, setOpsPagination] = useState({ page: 1, pageSize: 20, total: 0, totalPages: 1 });
-  const [opsCounters, setOpsCounters] = useState({
-    total: 0,
-    pendientes: 0,
-    enCamino: 0,
-    completados: 0,
-    auxilios: 0,
-    traslados: 0,
-  });
-  const [opsLoading, setOpsLoading] = useState(false);
-  const [opsFilters, setOpsFilters] = useState({
-    tipo: "" as "" | AuxilioTipo,
-    estado: "" as "" | AuxilioEstado,
-    prioridad: "" as "" | AuxilioPrioridad,
-    search: "",
-    dateFrom: "",
-    dateTo: "",
-    sortBy: "solicitado_en" as "solicitado_en" | "prioridad" | "estado" | "cliente",
-    sortDir: "desc" as "asc" | "desc",
-    page: 1,
-    pageSize: 20,
-  });
-
-  const [membresias, setMembresias] = useState<MembresiaRow[]>([]);
-  const [membresiasPagination, setMembresiasPagination] = useState({
-    page: 1,
-    pageSize: 20,
-    total: 0,
-    totalPages: 1,
-  });
-  const [membresiasResumen, setMembresiasResumen] = useState({
-    total: 0,
-    vencidas: 0,
-    proximas: 0,
-    activas: 0,
-    inactivas: 0,
-  });
-  const [membresiasLoading, setMembresiasLoading] = useState(false);
-  const [membresiasFilters, setMembresiasFilters] = useState({
-    estado: "todas" as "todas" | MembresiaEstado,
-    vencimiento: "todas" as "vencida" | "proxima" | "activa" | "inactiva" | "todas",
-    plan: "todas" as "todas" | "basico" | "premium",
-    search: "",
-    sortBy: "fecha_fin" as
-      | "fecha_fin"
-      | "nombre"
-      | "estado"
-      | "plan"
-      | "auxilios_restantes"
-      | "ultimo_service",
-    sortDir: "asc" as "asc" | "desc",
-    page: 1,
-    pageSize: 20,
-  });
-
-  const [reminders, setReminders] = useState<ReminderQueueItem[]>([]);
-  const [remindersPagination, setRemindersPagination] = useState({
-    page: 1,
-    pageSize: 20,
-    total: 0,
-    totalPages: 1,
-  });
-  const [remindersLoading, setRemindersLoading] = useState(false);
-  const [reminderFilters, setReminderFilters] = useState({
-    tipo: "todos" as
-      | "todos"
-      | "membresia_vence_7"
-      | "membresia_vence_3"
-      | "membresia_vence_1"
-      | "service_control_30",
-    estado: "todos" as "todos" | "pendiente" | "enviado_manual" | "omitido" | "error",
-    date: "",
-    search: "",
-    page: 1,
-    pageSize: 20,
-  });
-
-  const [serviciosSearch, setServiciosSearch] = useState("");
-  const helpProcedures = useMemo(() => listHelpProcedures(), []);
-  const [helpOpen, setHelpOpen] = useState(false);
-  const [tourProcedureId, setTourProcedureId] = useState<HelpProcedureId | null>(null);
-  const [tourStepIndex, setTourStepIndex] = useState(0);
-  const [tourOpen, setTourOpen] = useState(false);
-  const [tourProgress, setTourProgress] = useState<TourProgressSnapshot | null>(null);
-
-  const refreshDashboard = useCallback(async () => {
-    setLoadingDashboard(true);
-    setUiError("");
-    try {
-      const response = await fetch("/api/admin/dashboard", { cache: "no-store" });
-      const data = await parseApiResponse<DashboardApiResponse>(response);
-      setSolicitudes(data.solicitudes);
-      setServicios(data.servicios);
-      setStats(data.stats);
-    } catch (error) {
-      setUiError(error instanceof Error ? error.message : "No se pudo actualizar el panel");
-    } finally {
-      setLoadingDashboard(false);
-    }
-  }, []);
-
-  const fetchOperaciones = useCallback(async () => {
-    setOpsLoading(true);
-    try {
-      const query = buildQuery({
-        ...opsFilters,
-        tipo: opsFilters.tipo || undefined,
-        estado: opsFilters.estado || undefined,
-        prioridad: opsFilters.prioridad || undefined,
-      });
-      const response = await fetch(`/api/admin/auxilios?${query}`, { cache: "no-store" });
-      const data = await parseApiResponse<OperacionesApiResponse>(response);
-      setOperaciones(data.data);
-      setOpsPagination(data.pagination);
-      setOpsCounters(data.counters);
-    } catch (error) {
-      setUiError(error instanceof Error ? error.message : "No se pudieron cargar operaciones");
-    } finally {
-      setOpsLoading(false);
-    }
-  }, [opsFilters]);
-
-  const fetchMembresias = useCallback(async () => {
-    setMembresiasLoading(true);
-    try {
-      const query = buildQuery(membresiasFilters);
-      const response = await fetch(`/api/admin/membresias?${query}`, { cache: "no-store" });
-      const data = await parseApiResponse<MembresiasApiResponse>(response);
-      setMembresias(data.data);
-      setMembresiasPagination(data.pagination);
-      setMembresiasResumen(data.resumen);
-    } catch (error) {
-      setUiError(error instanceof Error ? error.message : "No se pudieron cargar membresías");
-    } finally {
-      setMembresiasLoading(false);
-    }
-  }, [membresiasFilters]);
-
-  const fetchReminders = useCallback(async () => {
-    setRemindersLoading(true);
-    try {
-      const query = buildQuery(reminderFilters);
-      const response = await fetch(`/api/admin/reminders?${query}`, { cache: "no-store" });
-      const data = await parseApiResponse<RemindersApiResponse>(response);
-      setReminders(data.data);
-      setRemindersPagination(data.pagination);
-    } catch (error) {
-      setUiError(error instanceof Error ? error.message : "No se pudieron cargar recordatorios");
-    } finally {
-      setRemindersLoading(false);
-    }
-  }, [reminderFilters]);
-
-  useEffect(() => {
-    void fetchOperaciones();
-  }, [fetchOperaciones]);
-
-  useEffect(() => {
-    void fetchMembresias();
-  }, [fetchMembresias]);
-
-  useEffect(() => {
-    void fetchReminders();
-  }, [fetchReminders]);
-
-  const filteredServicios = useMemo(() => {
-    const search = serviciosSearch.trim().toLowerCase();
-    if (!search) return servicios;
-    return servicios.filter((item) =>
-      [item.clienteNombre, item.moto, item.servicio].join(" ").toLowerCase().includes(search)
-    );
-  }, [servicios, serviciosSearch]);
-
-  const handlePatchOperacion = async (
-    id: string,
-    patch: Partial<{ estado: AuxilioEstado; prioridad: AuxilioPrioridad; notasInternas: string }>
-  ) => {
-    try {
-      const response = await fetch(`/api/admin/auxilios/${id}`, {
-        method: "PATCH",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify(patch),
-      });
-      await parseApiResponse<{ ok: true; id: string }>(response);
-      await Promise.all([fetchOperaciones(), refreshDashboard()]);
-    } catch (error) {
-      setUiError(error instanceof Error ? error.message : "No se pudo actualizar operación");
-    }
-  };
-
-  const handleRenovar = async (row: MembresiaRow) => {
-    try {
-      const response = await fetch("/api/suscripciones", {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ _action: "renew", id: row.clienteId }),
-      });
-      await parseApiResponse<{ ok: true; id: string }>(response);
-      await Promise.all([fetchMembresias(), refreshDashboard()]);
-    } catch (error) {
-      setUiError(error instanceof Error ? error.message : "No se pudo renovar");
-    }
-  };
-
-  const handleMarkReminderSent = async (id: string) => {
-    try {
-      const response = await fetch(`/api/admin/reminders/${id}/mark-sent`, {
-        method: "POST",
-      });
-      await parseApiResponse<{ ok: true; id: string }>(response);
-      await fetchReminders();
-    } catch (error) {
-      setUiError(error instanceof Error ? error.message : "No se pudo marcar envío");
-    }
-  };
-
-  const handleSkipReminder = async (id: string) => {
-    try {
-      const reason =
-        window.prompt("Motivo para omitir (opcional). Este texto queda auditado.", "") || "";
-      const response = await fetch(`/api/admin/reminders/${id}/skip`, {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ reason: reason.trim() || undefined }),
-      });
-      await parseApiResponse<{ ok: true; id: string }>(response);
-      await fetchReminders();
-    } catch (error) {
-      setUiError(error instanceof Error ? error.message : "No se pudo omitir recordatorio");
-    }
-  };
-
-  const persistTourProgress = useCallback((snapshot: TourProgressSnapshot) => {
-    setTourProgress(snapshot);
-    if (typeof window === "undefined") return;
-    window.localStorage.setItem(HELP_TOUR_STORAGE_KEY, JSON.stringify(snapshot));
-  }, []);
-
-  useEffect(() => {
-    if (typeof window === "undefined") return;
-    const raw = window.localStorage.getItem(HELP_TOUR_STORAGE_KEY);
-    if (!raw) return;
-    try {
-      const parsed = JSON.parse(raw) as TourProgressSnapshot;
-      if (!parsed?.procedureId || typeof parsed.stepIndex !== "number") return;
-      setTourProgress(parsed);
-    } catch {
-      window.localStorage.removeItem(HELP_TOUR_STORAGE_KEY);
-    }
-  }, []);
-
-  const startTour = useCallback(
-    (procedureId: HelpProcedureId, mode: "start" | "resume") => {
-      const procedure = getHelpProcedureById(procedureId);
-      if (!procedure) return;
-
-      const shouldResume =
-        mode === "resume" &&
-        tourProgress &&
-        !tourProgress.completed &&
-        tourProgress.procedureId === procedureId;
-
-      const nextStep = shouldResume ? tourProgress.stepIndex : 0;
-      const boundedStep = Math.max(0, Math.min(nextStep, procedure.steps.length - 1));
-      const activeStep = procedure.steps[boundedStep];
-      if (activeStep?.tab) {
-        setActiveTab(activeStep.tab);
-      }
-
-      setTourProcedureId(procedureId);
-      setTourStepIndex(boundedStep);
-      setTourOpen(true);
-      setHelpOpen(false);
-      persistTourProgress({
-        procedureId,
-        stepIndex: boundedStep,
-        completed: false,
-        updatedAt: new Date().toISOString(),
-      });
-    },
-    [persistTourProgress, tourProgress]
-  );
-
-  const handleTourStepChange = useCallback(
-    (index: number) => {
-      if (!tourProcedureId) return;
-      const procedure = getHelpProcedureById(tourProcedureId);
-      if (!procedure) return;
-      const bounded = Math.max(0, Math.min(index, procedure.steps.length - 1));
-      setTourStepIndex(bounded);
-      persistTourProgress({
-        procedureId: tourProcedureId,
-        stepIndex: bounded,
-        completed: false,
-        updatedAt: new Date().toISOString(),
-      });
-    },
-    [persistTourProgress, tourProcedureId]
-  );
-
-  const closeTour = useCallback(() => {
-    setTourOpen(false);
-  }, []);
-
-  const resetTour = useCallback(() => {
-    if (!tourProcedureId) return;
-    setTourStepIndex(0);
-    persistTourProgress({
-      procedureId: tourProcedureId,
-      stepIndex: 0,
-      completed: false,
-      updatedAt: new Date().toISOString(),
-    });
-  }, [persistTourProgress, tourProcedureId]);
-
-  const completeTour = useCallback(() => {
-    if (!tourProcedureId) return;
-    persistTourProgress({
-      procedureId: tourProcedureId,
-      stepIndex: tourStepIndex,
-      completed: true,
-      updatedAt: new Date().toISOString(),
-    });
-    setTourOpen(false);
-  }, [persistTourProgress, tourProcedureId, tourStepIndex]);
-
-  const tabs = [
-    { id: "overview" as const, label: "Resumen", icon: TrendingUp },
-    { id: "auxilios" as const, label: "Operaciones", icon: AlertTriangle },
-    { id: "membresias" as const, label: "Membresías", icon: Users },
-    { id: "agenda" as const, label: "Agenda", icon: CalendarDays },
-    { id: "reminders" as const, label: "Recordatorios", icon: Bell },
-    { id: "servicios" as const, label: "Servicios", icon: Wrench },
-  ];
-
-  const activeTourProcedure = tourProcedureId
-    ? getHelpProcedureById(tourProcedureId) ?? null
-    : null;
-
-  return (
-    <div className="min-h-screen pb-20 md:pb-0" data-help-id="admin-root">
-      <section className="px-4 pt-8 pb-4">
-        <motion.div initial={{ opacity: 0, y: 8 }} animate={{ opacity: 1, y: 0 }} className="max-w-7xl mx-auto">
-          <div className="flex items-center justify-between gap-3 flex-wrap">
-            <div>
-              <h1 className="text-2xl font-bold mb-1">
-                Panel <span className="text-fede-accent">Operativo</span>
-              </h1>
-              <p className="text-fede-muted text-sm">Auxilios, traslados, membresías y recordatorios.</p>
-            </div>
-            <div className="flex items-center gap-2">
-              <Link href="/" className="btn-outline text-xs py-2 px-4 inline-flex items-center gap-2">
-                Ir al sitio
-              </Link>
-              <button
-                onClick={() => setHelpOpen(true)}
-                className="btn-outline text-xs py-2 px-4 inline-flex items-center gap-2"
-                data-help-id="admin-help-button"
-              >
-                <LifeBuoy className="w-3 h-3" />
-                Ayuda operativa
-              </button>
-              <button
-                onClick={() => {
-                  void Promise.all([refreshDashboard(), fetchOperaciones(), fetchMembresias(), fetchReminders()]);
-                }}
-                className="btn-outline text-xs py-2 px-4 flex items-center gap-2"
-                disabled={loadingDashboard || opsLoading || membresiasLoading || remindersLoading}
-                data-help-id="admin-refresh"
-              >
-                <RefreshCw className="w-3 h-3" />
-                Actualizar todo
-              </button>
-            </div>
-          </div>
-          {uiError && (
-            <div className="mt-3 rounded-xl border border-red-500/30 bg-red-500/10 px-4 py-3 text-sm text-red-300">
-              {uiError}
-            </div>
-          )}
-        </motion.div>
-      </section>
-
-      <section className="px-4 pb-4">
-        <div className="max-w-7xl mx-auto flex gap-1 overflow-x-auto scrollbar-hide" data-help-id="admin-tabs">
-          {tabs.map((tab) => {
-            const Icon = tab.icon;
-            return (
-              <button
-                key={tab.id}
-                onClick={() => setActiveTab(tab.id)}
-                data-help-id={`admin-tab-${tab.id}`}
-                className={`flex items-center gap-2 px-4 py-2.5 rounded-xl text-sm font-medium whitespace-nowrap transition-all duration-300 ${
-                  activeTab === tab.id
-                    ? "bg-fede-accent text-white shadow-[0_0_20px_rgba(239,68,68,0.3)]"
-                    : "bg-fede-card text-fede-muted hover:text-white border border-fede-border"
-                }`}
-              >
-                <Icon className="w-4 h-4" />
-                {tab.label}
-              </button>
-            );
-          })}
-        </div>
-      </section>
-
-      <section className="px-4 pb-12 max-w-7xl mx-auto">
-        {activeTab === "overview" && (
-          <OverviewTab stats={stats} auxilios={solicitudes} servicios={servicios} />
-        )}
-
-        {activeTab === "auxilios" && (
-          <AuxiliosOperativosTab
-            loading={opsLoading}
-            data={operaciones}
-            counters={opsCounters}
-            pagination={opsPagination}
-            filters={opsFilters}
-            onFiltersChange={setOpsFilters}
-            onOpenCreate={() => setModalOperacion(true)}
-            onPatch={handlePatchOperacion}
-          />
-        )}
-
-        {activeTab === "membresias" && (
-          <MembresiasTableTab
-            loading={membresiasLoading}
-            rows={membresias}
-            pagination={membresiasPagination}
-            resumen={membresiasResumen}
-            filters={membresiasFilters}
-            onFiltersChange={setMembresiasFilters}
-            onOpenCreate={() => setModalMembresia(true)}
-            onOpenBulk={() => setModalCargaMasiva(true)}
-            onEdit={(row) => setEditingMembership(row)}
-            onRenew={handleRenovar}
-            onGoHistory={(row) => {
-              setServiciosSearch(row.nombre);
-              setActiveTab("servicios");
-            }}
-          />
-        )}
-
-        {activeTab === "agenda" && <AdminAgendaTab />}
-
-        {activeTab === "reminders" && (
-          <RemindersTab
-            loading={remindersLoading}
-            rows={reminders}
-            pagination={remindersPagination}
-            filters={reminderFilters}
-            onFiltersChange={setReminderFilters}
-            onMarkSent={handleMarkReminderSent}
-            onSkip={handleSkipReminder}
-          />
-        )}
-
-        {activeTab === "servicios" && (
-          <ServiciosTab
-            servicios={filteredServicios}
-            search={serviciosSearch}
-            onSearchChange={setServiciosSearch}
-            onNuevo={() => setModalServicio(true)}
-          />
-        )}
-      </section>
-
-      <NuevaOperacionModal
-        isOpen={modalOperacion}
-        onClose={() => setModalOperacion(false)}
-        onSuccess={async () => {
-          await Promise.all([fetchOperaciones(), refreshDashboard()]);
-        }}
-      />
-
-      <NuevaMembresiaModal
-        isOpen={modalMembresia}
-        onClose={() => setModalMembresia(false)}
-        onSuccess={async () => {
-          await Promise.all([fetchMembresias(), refreshDashboard()]);
-        }}
-      />
-
-      <CargarServicioModal
-        isOpen={modalServicio}
-        onClose={() => setModalServicio(false)}
-        onSuccess={async () => {
-          await refreshDashboard();
-        }}
-      />
-
-      <CargaMasivaModal
-        isOpen={modalCargaMasiva}
-        onClose={() => setModalCargaMasiva(false)}
-        onSuccess={async () => {
-          await Promise.all([fetchMembresias(), refreshDashboard()]);
-        }}
-      />
-
-      <MembershipEditModal
-        isOpen={Boolean(editingMembership)}
-        membership={editingMembership}
-        onClose={() => setEditingMembership(null)}
-        onSaved={async () => {
-          await Promise.all([fetchMembresias(), refreshDashboard()]);
-        }}
-      />
-
-      <AdminHelpCenter
-        isOpen={helpOpen}
-        procedures={helpProcedures}
-        progress={tourProgress}
-        onClose={() => setHelpOpen(false)}
-        onStartTour={startTour}
-      />
-
-      <AdminGuidedTour
-        procedure={tourOpen ? activeTourProcedure : null}
-        stepIndex={tourStepIndex}
-        onStepChange={handleTourStepChange}
-        onClose={closeTour}
-        onComplete={completeTour}
-        onReset={resetTour}
-        onNavigateTab={(tab) => setActiveTab(tab)}
-      />
-    </div>
-  );
-}
-
-function OverviewTab({
+export function OverviewTab({
   stats,
   auxilios,
   servicios,
@@ -995,7 +369,7 @@ function OverviewTab({
   );
 }
 
-function AuxiliosOperativosTab({
+export function AuxiliosOperativosTab({
   loading,
   data,
   counters,
@@ -1267,6 +641,14 @@ function AuxiliosOperativosTab({
                         >
                           Ver mapa
                         </a>
+                        <a
+                          className="btn-outline text-[11px] px-2 py-1 text-emerald-400 border-emerald-500/30 hover:bg-emerald-500/10"
+                          href={buildWhatsAppDispatchLink(item)}
+                          target="_blank"
+                          rel="noreferrer"
+                        >
+                          Despachar
+                        </a>
                       </div>
                     </td>
                   </tr>
@@ -1285,7 +667,7 @@ function AuxiliosOperativosTab({
   );
 }
 
-function MembresiasTableTab({
+export function MembresiasTableTab({
   loading,
   rows,
   pagination,
@@ -1570,7 +952,7 @@ function MembresiasTableTab({
   );
 }
 
-function RemindersTab({
+export function RemindersTab({
   loading,
   rows,
   pagination,
@@ -1803,18 +1185,24 @@ function RemindersTab({
   );
 }
 
-function ServiciosTab({
+export function ServiciosTab({
   servicios,
   search,
   onSearchChange,
   onNuevo,
+  onGenerarRecibo,
 }: {
   servicios: ServicioRegistro[];
   search: string;
   onSearchChange: (value: string) => void;
   onNuevo: () => void;
+  onGenerarRecibo?: (servicio: ServicioRegistro) => void;
 }) {
   const handleGenerarRecibo = async (servicio: ServicioRegistro) => {
+    if (onGenerarRecibo) {
+      onGenerarRecibo(servicio);
+      return;
+    }
     try {
       await generateOperationalReceiptPdf(servicio);
     } catch (error) {
@@ -1902,47 +1290,6 @@ function ServiciosTab({
             )}
           </div>
         ))}
-      </div>
-    </div>
-  );
-}
-
-function StatMini({ label, value }: { label: string; value: number }) {
-  return (
-    <div className="glass-card p-3">
-      <p className="text-xs text-fede-muted">{label}</p>
-      <p className="text-lg font-bold">{value}</p>
-    </div>
-  );
-}
-
-function Pagination({
-  pagination,
-  onPageChange,
-}: {
-  pagination: { page: number; pageSize: number; total: number; totalPages: number };
-  onPageChange: (page: number) => void;
-}) {
-  return (
-    <div className="flex items-center justify-between pt-2 text-xs text-fede-muted">
-      <span>
-        Página {pagination.page} de {pagination.totalPages} · {pagination.total} registros
-      </span>
-      <div className="flex gap-2">
-        <button
-          className="btn-outline text-[11px] px-2 py-1"
-          disabled={pagination.page <= 1}
-          onClick={() => onPageChange(pagination.page - 1)}
-        >
-          Anterior
-        </button>
-        <button
-          className="btn-outline text-[11px] px-2 py-1"
-          disabled={pagination.page >= pagination.totalPages}
-          onClick={() => onPageChange(pagination.page + 1)}
-        >
-          Siguiente
-        </button>
       </div>
     </div>
   );

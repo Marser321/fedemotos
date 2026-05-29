@@ -60,7 +60,7 @@ export function EmergencyButton({ onLocationCapture }: EmergencyButtonProps) {
                 disabled={state === "requesting" || state === "located"}
                 whileTap={{ scale: 0.95 }}
                 className={`relative w-48 h-48 sm:w-56 sm:h-56 rounded-full flex items-center justify-center transition-all duration-500 ${state === "idle"
-                    ? "bg-gradient-to-br from-fede-accent to-fede-accent-dark animate-pulse-emergency cursor-pointer hover:shadow-[0_0_60px_rgba(239,68,68,0.5)]"
+                    ? "bg-gradient-to-br from-fede-accent-glow via-fede-accent to-fede-accent-dark animate-pulse-emergency cursor-pointer hover:shadow-[0_0_60px_rgba(172,28,29,0.5)]"
                     : state === "requesting"
                         ? "bg-gradient-to-br from-yellow-600 to-yellow-800 cursor-wait"
                         : state === "located"
@@ -168,8 +168,8 @@ export function EmergencyButton({ onLocationCapture }: EmergencyButtonProps) {
                         className="flex flex-col items-center gap-3"
                     >
                         <p className="text-green-400 font-medium text-center">
-                            Tu ubicación fue enviada al taller. <br />
-                            Estamos yendo a buscarte.
+                            Tu ubicación quedó registrada. <br />
+                            El taller revisa la solicitud y te contacta.
                         </p>
                         <a
                             href={`tel:+${supportWhatsapp.replace(/\D/g, "")}`}

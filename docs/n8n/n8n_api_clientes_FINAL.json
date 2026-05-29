@@ -1,0 +1,149 @@
+{
+    "name": "API Clientes FINAL",
+    "nodes": [
+        {
+            "parameters": {
+                "httpMethod": "={{$json.method}}",
+                "path": "api/clientes",
+                "responseMode": "responseNode",
+                "options": {}
+            },
+            "id": "webhook-1",
+            "name": "Webhook",
+            "type": "n8n-nodes-base.webhook",
+            "typeVersion": 2,
+            "position": [
+                250,
+                300
+            ],
+            "webhookId": "api-clientes-final"
+        },
+        {
+            "parameters": {
+                "conditions": {
+                    "options": {
+                        "caseSensitive": true,
+                        "leftValue": "",
+                        "typeValidation": "strict"
+                    },
+                    "conditions": [
+                        {
+                            "id": "condition-1",
+                            "leftValue": "={{ $json.method }}",
+                            "rightValue": "POST",
+                            "operator": {
+                                "type": "string",
+                                "operation": "equals"
+                            }
+                        }
+                    ],
+                    "combinator": "and"
+                },
+                "options": {}
+            },
+            "id": "if-1",
+            "name": "Es POST?",
+            "type": "n8n-nodes-base.if",
+            "typeVersion": 2,
+            "position": [
+                470,
+                300
+            ]
+        },
+        {
+            "parameters": {
+                "respondWith": "json",
+                "responseBody": "={{ $json }}",
+                "options": {}
+            },
+            "id": "respond-post",
+            "name": "Respuesta POST",
+            "type": "n8n-nodes-base.respondToWebhook",
+            "typeVersion": 1.1,
+            "position": [
+                900,
+                200
+            ]
+        },
+        {
+            "parameters": {
+                "respondWith": "json",
+                "responseBody": "=[{\"id\":\"CLI001\",\"nombre\":\"Juan Demo\",\"telefono\":\"099123456\",\"email\":\"juan@demo.com\",\"modelo\":\"Honda CB 190R\",\"matricula\":\"SBU 1234\"},{\"id\":\"CLI002\",\"nombre\":\"Maria Test\",\"telefono\":\"098765432\",\"email\":\"maria@test.com\",\"modelo\":\"Yamaha FZ 25\",\"matricula\":\"ABC 5678\"}]",
+                "options": {}
+            },
+            "id": "respond-get",
+            "name": "Respuesta GET",
+            "type": "n8n-nodes-base.respondToWebhook",
+            "typeVersion": 1.1,
+            "position": [
+                900,
+                400
+            ]
+        },
+        {
+            "parameters": {
+                "jsCode": "// Preparar datos para guardar\nconst body = $input.first().json.body || {};\nconst newClient = {\n  id: 'CLI' + Date.now(),\n  nombre: body.nombre || 'Sin nombre',\n  telefono: body.telefono || '',\n  email: body.email || '',\n  modelo: body.modelo || '',\n  matricula: body.matricula || '',\n  fecha_registro: new Date().toISOString()\n};\nreturn [{ json: newClient }];"
+            },
+            "id": "code-1",
+            "name": "Preparar Datos",
+            "type": "n8n-nodes-base.code",
+            "typeVersion": 2,
+            "position": [
+                690,
+                200
+            ]
+        }
+    ],
+    "connections": {
+        "Webhook": {
+            "main": [
+                [
+                    {
+                        "node": "Es POST?",
+                        "type": "main",
+                        "index": 0
+                    }
+                ]
+            ]
+        },
+        "Es POST?": {
+            "main": [
+                [
+                    {
+                        "node": "Preparar Datos",
+                        "type": "main",
+                        "index": 0
+                    }
+                ],
+                [
+                    {
+                        "node": "Respuesta GET",
+                        "type": "main",
+                        "index": 0
+                    }
+                ]
+            ]
+        },
+        "Preparar Datos": {
+            "main": [
+                [
+                    {
+                        "node": "Respuesta POST",
+                        "type": "main",
+                        "index": 0
+                    }
+                ]
+            ]
+        }
+    },
+    "active": true,
+    "settings": {
+        "executionOrder": "v1"
+    },
+    "versionId": "1",
+    "meta": {
+        "templateCredsSetupCompleted": true,
+        "instanceId": "local"
+    },
+    "tags": []
+}

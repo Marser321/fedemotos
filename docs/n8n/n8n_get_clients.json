@@ -1,0 +1,45 @@
+{
+    "name": "API Leer Clientes (CSV)",
+    "nodes": [
+        {
+            "parameters": {
+                "path": "api/clientes",
+                "options": {}
+            },
+            "name": "Webhook GET Clientes",
+            "type": "n8n-nodes-base.webhook",
+            "typeVersion": 1,
+            "position": [
+                200,
+                300
+            ]
+        },
+        {
+            "parameters": {
+                "operation": "read",
+                "fileName": "/data/clientes.csv",
+                "options": {}
+            },
+            "name": "Leer CSV Clientes",
+            "type": "n8n-nodes-base.spreadsheetFile",
+            "typeVersion": 1,
+            "position": [
+                400,
+                300
+            ]
+        }
+    ],
+    "connections": {
+        "Webhook GET Clientes": {
+            "main": [
+                [
+                    {
+                        "node": "Leer CSV Clientes",
+                        "type": "main",
+                        "index": 0
+                    }
+                ]
+            ]
+        }
+    }
+}

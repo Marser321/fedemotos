@@ -1,0 +1,49 @@
+{
+    "name": "Webhook WhatsApp AppSheet",
+    "nodes": [
+        {
+            "parameters": {
+                "httpMethod": "POST",
+                "path": "appsheet-vencimiento",
+                "options": {}
+            },
+            "name": "Webhook AppSheet",
+            "type": "n8n-nodes-base.webhook",
+            "typeVersion": 1,
+            "position": [
+                250,
+                300
+            ]
+        },
+        {
+            "parameters": {
+                "authentication": "headerAuth",
+                "requestMethod": "POST",
+                "url": "https://api.whatsapp-provider.com/send",
+                "jsonParameters": true,
+                "options": {},
+                "bodyParametersJson": "{\n  \"phone\": \"{{ $json.body.Telefono }}\",\n  \"message\": \"Hola {{ $json.body.Cliente }}, esperamos que tu {{ $json.body.Matricula }} esté funcionando de maravilla 🚗.\\n\\nNotamos que tu protección de Auxilio Mecánico vence el {{ $json.body.Vencimiento }} (en solo 3 días).\\n\\n🌧️ Nadie planea quedarse varado, pero sucede. No pierdas tu cobertura de grúa y asistencia en ruta. Renueva hoy para mantener tu tranquilidad por otro año completo.\\n\\n👉 Responde 'RENOVAR' para enviarte el link de pago. ¡Te mantenemos en movimiento!\"\n}"
+            },
+            "name": "Enviar WhatsApp",
+            "type": "n8n-nodes-base.httpRequest",
+            "typeVersion": 1,
+            "position": [
+                450,
+                300
+            ]
+        }
+    ],
+    "connections": {
+        "Webhook AppSheet": {
+            "main": [
+                [
+                    {
+                        "node": "Enviar WhatsApp",
+                        "type": "main",
+                        "index": 0
+                    }
+                ]
+            ]
+        }
+    }
+}

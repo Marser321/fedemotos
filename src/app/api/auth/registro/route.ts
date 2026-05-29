@@ -1,6 +1,7 @@
 import { NextResponse } from "next/server";
 import { AppError, apiErrorResponse } from "@/lib/errors";
 import { parseJson, getClientIp } from "@/lib/api";
+import { consumeRateLimit } from "@/lib/rate-limit";
 import { registroSchema } from "@/lib/validation";
 import { buscarClientePorTelefono } from "@/lib/services";
 import { normalizePhone } from "@/lib/phone";
@@ -11,6 +12,18 @@ export async function POST(request: Request) {
     const payload = await parseJson(request, registroSchema);
     const ip = getClientIp(request);
     const telefono = normalizePhone(payload.telefono);
+
+    const rate = consumeRateLimit(`otp-registro:${ip}`, {
+      max: 5,
+      windowMs: 10 * 60 * 1000,
+    });
+    if (!rate.allowed) {
+      throw new AppError(
+        "RATE_LIMITED",
+        "Demasiados intentos. Esperá unos minutos e intentá de nuevo.",
+        429
+      );
+    }
 
     ensureOtpInterimEnv();
 

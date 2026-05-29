@@ -100,6 +100,60 @@ export const adminActualizarOperacionSchema = z.object({
   notasInternas: z.string().max(1000).optional(),
 });
 
+export const ordenEstadoSchema = z.enum([
+  "ingresado",
+  "diagnostico",
+  "espera_repuestos",
+  "reparacion",
+  "listo",
+  "entregado",
+  "cancelado",
+]);
+
+export const adminCrearOrdenSchema = z
+  .object({
+    cliente: z.object({
+      nombre: z.string().min(2, "Ingresá el nombre del cliente"),
+      telefono: phoneSchema,
+      email: z.string().email().optional(),
+    }),
+    vehiculo: z.object({
+      id: z.string().uuid("ID de vehículo inválido").optional(),
+      marca: z.string().min(1, "Ingresá la marca").optional(),
+      modelo: z.string().min(1, "Ingresá el modelo").optional(),
+      kilometraje: z.number().int().min(0).optional(),
+    }),
+    turnoId: z.string().uuid("ID de turno inválido").optional(),
+    titulo: z.string().min(2, "Ingresá el trabajo a realizar").max(160),
+    descripcion: z.string().max(1200).optional(),
+    diagnostico: z.string().max(1200).optional(),
+    notasInternas: z.string().max(1200).optional(),
+    costoEstimado: z.number().min(0).optional(),
+    fechaPrometida: dateSchema.optional(),
+  })
+  .superRefine((input, ctx) => {
+    const hasVehicleId = Boolean(input.vehiculo.id);
+    const hasVehicleBrandModel = Boolean(input.vehiculo.marca && input.vehiculo.modelo);
+    if (!hasVehicleId && !hasVehicleBrandModel) {
+      ctx.addIssue({
+        code: z.ZodIssueCode.custom,
+        message: "Seleccioná un vehículo existente o ingresá marca y modelo",
+        path: ["vehiculo"],
+      });
+    }
+  });
+
+export const adminActualizarOrdenSchema = z.object({
+  estado: ordenEstadoSchema.optional(),
+  titulo: z.string().min(2).max(160).optional(),
+  descripcion: z.string().max(1200).nullable().optional(),
+  diagnostico: z.string().max(1200).nullable().optional(),
+  notasInternas: z.string().max(1200).nullable().optional(),
+  costoEstimado: z.number().min(0).optional(),
+  costoFinal: z.number().min(0).optional(),
+  fechaPrometida: dateSchema.nullable().optional(),
+});
+
 export const crearTurnoSchema = z.object({
   nombre: z.string().min(2, "Ingresá tu nombre"),
   telefono: phoneSchema,

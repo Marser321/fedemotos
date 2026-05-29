@@ -1,0 +1,73 @@
+{
+    "name": "API Clientes Simple",
+    "nodes": [
+        {
+            "parameters": {
+                "httpMethod": "POST",
+                "path": "api/clientes",
+                "responseMode": "onReceived",
+                "options": {}
+            },
+            "id": "webhook-post",
+            "name": "Recibir Cliente",
+            "type": "n8n-nodes-base.webhook",
+            "typeVersion": 1,
+            "position": [
+                250,
+                300
+            ],
+            "webhookId": "api-clientes-post"
+        },
+        {
+            "parameters": {
+                "functionCode": "// Tomar datos del body\nconst body = items[0].json.body || items[0].json;\n\n// Crear objeto cliente\nconst cliente = {\n  id: 'CLI_' + Date.now(),\n  nombre: body.nombre || 'Sin nombre',\n  telefono: body.telefono || '',\n  matricula: body.matricula || '',\n  modelo: body.modelo || '',\n  fecha: new Date().toISOString()\n};\n\nreturn [{ json: cliente }];"
+            },
+            "id": "function-format",
+            "name": "Formatear Datos",
+            "type": "n8n-nodes-base.function",
+            "typeVersion": 1,
+            "position": [
+                500,
+                300
+            ]
+        },
+        {
+            "parameters": {
+                "filePath": "/data/clientes.csv",
+                "options": {}
+            },
+            "id": "write-csv",
+            "name": "Guardar en CSV",
+            "type": "n8n-nodes-base.writeBinaryFile",
+            "typeVersion": 1,
+            "position": [
+                750,
+                300
+            ]
+        }
+    ],
+    "connections": {
+        "Recibir Cliente": {
+            "main": [
+                [
+                    {
+                        "node": "Formatear Datos",
+                        "type": "main",
+                        "index": 0
+                    }
+                ]
+            ]
+        },
+        "Formatear Datos": {
+            "main": [
+                [
+                    {
+                        "node": "Guardar en CSV",
+                        "type": "main",
+                        "index": 0
+                    }
+                ]
+            ]
+        }
+    }
+}

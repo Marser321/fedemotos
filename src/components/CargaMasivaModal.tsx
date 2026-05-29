@@ -50,6 +50,53 @@ export function CargaMasivaModal({
         onClose();
     };
 
+    // Parsear VCF a contactos
+    const parsearVCF = (texto: string): ContactoPreview[] => {
+        const vcards = texto.split(/BEGIN:VCARD/i);
+        const contactosParsed: ContactoPreview[] = [];
+
+        for (const card of vcards) {
+            if (!card.trim()) continue;
+
+            let nombre = "";
+            let telefono = "";
+            let email = "";
+
+            const lineas = card.split(/\r?\n/);
+            for (const linea of lineas) {
+                const limpia = linea.trim();
+                const upper = limpia.toUpperCase();
+                if (upper.startsWith("FN:") || upper.startsWith("FN;")) {
+                    const index = limpia.indexOf(":");
+                    if (index !== -1) {
+                        nombre = limpia.slice(index + 1).trim();
+                    }
+                } else if (upper.startsWith("TEL:") || upper.startsWith("TEL;")) {
+                    const index = limpia.indexOf(":");
+                    if (index !== -1) {
+                        const numRaw = limpia.slice(index + 1).trim();
+                        // Conservar solo dígitos y el signo +
+                        telefono = numRaw.replace(/[^\d+]/g, "");
+                    }
+                } else if (upper.startsWith("EMAIL:") || upper.startsWith("EMAIL;")) {
+                    const index = limpia.indexOf(":");
+                    if (index !== -1) {
+                        email = limpia.slice(index + 1).trim();
+                    }
+                }
+            }
+
+            if (nombre || telefono) {
+                contactosParsed.push({
+                    nombre: nombre || "Contacto sin nombre",
+                    telefono: telefono || "",
+                    email: email || undefined,
+                });
+            }
+        }
+        return contactosParsed;
+    };
+
     // Parsear CSV a contactos
     const parsearCSV = (texto: string): ContactoPreview[] => {
         const lineas = texto
@@ -70,7 +117,7 @@ export function CargaMasivaModal({
         });
     };
 
-    // Manejar archivo CSV subido
+    // Manejar archivo subido
     const handleFileUpload = (e: React.ChangeEvent<HTMLInputElement>) => {
         const file = e.target.files?.[0];
         if (!file) return;
@@ -78,10 +125,10 @@ export function CargaMasivaModal({
         const reader = new FileReader();
         reader.onload = (ev) => {
             const contenido = ev.target?.result as string;
-            // Detectar si tiene encabezado (primera línea con "nombre")
+            // Detectar si tiene encabezado (primera línea con "nombre" o "name")
             const lineas = contenido.split("\n");
             const primeraLinea = lineas[0]?.toLowerCase() || "";
-            const tieneEncabezado = primeraLinea.includes("nombre") || primeraLinea.includes("name");
+            const tieneEncabezado = !primeraLinea.includes("begin:vcard") && (primeraLinea.includes("nombre") || primeraLinea.includes("name"));
             const textoFinal = tieneEncabezado ? lineas.slice(1).join("\n") : contenido;
             setTextoCSV(textoFinal);
         };
@@ -90,9 +137,10 @@ export function CargaMasivaModal({
 
     // Preview de los datos
     const handlePreview = () => {
-        const parsed = parsearCSV(textoCSV);
+        const isVCF = textoCSV.toUpperCase().includes("BEGIN:VCARD");
+        const parsed = isVCF ? parsearVCF(textoCSV) : parsearCSV(textoCSV);
         if (parsed.length === 0) {
-            setError("No se encontraron contactos. Pegá los datos en formato CSV.");
+            setError(isVCF ? "No se encontraron contactos en formato VCF." : "No se encontraron contactos. Pegá los datos en formato CSV o VCF.");
             return;
         }
         // Filtrar los que no tienen datos
@@ -104,6 +152,17 @@ export function CargaMasivaModal({
         setError("");
         setContactos(validos);
         setPaso("preview");
+    };
+
+    // Manejar cambios en la edición manual
+    const updateContacto = (index: number, field: keyof ContactoPreview, value: string) => {
+        setContactos((prev) =>
+            prev.map((c, i) => (i === index ? { ...c, [field]: value } : c))
+        );
+    };
+
+    const eliminarContacto = (index: number) => {
+        setContactos((prev) => prev.filter((_, i) => i !== index));
     };
 
     // Ejecutar la carga
@@ -123,10 +182,24 @@ export function CargaMasivaModal({
         }, 300);
 
         try {
+            // Sanitizar los contactos para evitar campos vacíos no válidos (e.g. emails vacíos)
+            const contactosSanitizados = contactos
+                .map((c) => {
+                    const emailLimpio = c.email?.trim() || "";
+                    return {
+                        nombre: c.nombre?.trim() || "Contacto sin nombre",
+                        telefono: c.telefono?.trim() || "",
+                        email: emailLimpio ? emailLimpio : undefined,
+                        marca: c.marca?.trim() || undefined,
+                        modelo: c.modelo?.trim() || undefined,
+                    };
+                })
+                .filter((c) => c.telefono);
+
             const res = await fetch("/api/clientes/carga-masiva", {
                 method: "POST",
                 headers: { "Content-Type": "application/json" },
-                body: JSON.stringify({ contactos }),
+                body: JSON.stringify({ contactos: contactosSanitizados }),
             });
 
             clearInterval(interval);
@@ -169,7 +242,7 @@ export function CargaMasivaModal({
 
                 {/* Modal */}
                 <motion.div
-                    className="relative w-full max-w-2xl max-h-[90vh] overflow-y-auto bg-zinc-900 border border-zinc-700 rounded-2xl shadow-2xl"
+                    className="relative w-full max-w-2xl max-h-[90vh] overflow-y-auto bg-zinc-900 border border-zinc-700 rounded-lg shadow-2xl"
                     initial={{ scale: 0.9, y: 20 }}
                     animate={{ scale: 1, y: 0 }}
                     exit={{ scale: 0.9, y: 20 }}
@@ -177,8 +250,8 @@ export function CargaMasivaModal({
                     {/* Header */}
                     <div className="sticky top-0 z-10 bg-zinc-900/95 backdrop-blur-sm border-b border-zinc-700 px-6 py-4 flex items-center justify-between">
                         <div className="flex items-center gap-3">
-                            <div className="p-2 bg-red-500/20 rounded-lg">
-                                <Users className="w-5 h-5 text-red-400" />
+                            <div className="p-2 bg-fede-accent/15 rounded-lg">
+                                <Users className="w-5 h-5 text-fede-accent" />
                             </div>
                             <div>
                                 <h2 className="text-lg font-bold text-white">Carga Masiva de Clientes</h2>
@@ -203,17 +276,33 @@ export function CargaMasivaModal({
                         {paso === "input" && (
                             <div className="space-y-4">
                                 {/* Instrucciones */}
-                                <div className="bg-zinc-800/50 border border-zinc-700 rounded-xl p-4">
-                                    <h3 className="text-sm font-semibold text-zinc-300 mb-2 flex items-center gap-2">
-                                        <FileText className="w-4 h-4 text-red-400" />
-                                        Formato esperado (CSV)
-                                    </h3>
-                                    <code className="text-xs text-zinc-400 block whitespace-pre leading-relaxed">
-                                        {`Nombre, Teléfono, Email, Marca, Modelo\nJuan Pérez, 099123456, juan@mail.com, Honda, CG 150\nMaría López, 098654321\nCarlos García, 097111222, , Yamaha, YBR 125`}
-                                    </code>
-                                    <p className="text-xs text-zinc-500 mt-2">
-                                        Solo <strong>Nombre</strong> y <strong>Teléfono</strong> son obligatorios. Separadores válidos: coma, punto y coma, o tab.
-                                    </p>
+                                <div className="bg-zinc-800/50 border border-zinc-700 rounded-lg p-4 space-y-3">
+                                    <div>
+                                        <h3 className="text-sm font-semibold text-zinc-300 mb-1.5 flex items-center gap-2">
+                                            <FileText className="w-4 h-4 text-fede-accent" />
+                                            Formatos de Importación Soportados
+                                        </h3>
+                                        <p className="text-xs text-zinc-400 leading-normal">
+                                            Pegá o subí archivos en formato **CSV** o **VCF (vCard)**. Nombre y teléfono son obligatorios.
+                                        </p>
+                                    </div>
+
+                                    <div className="grid gap-3 sm:grid-cols-2 text-xs">
+                                        <div className="bg-zinc-900/40 p-2.5 rounded border border-zinc-800">
+                                            <p className="font-semibold text-zinc-300 mb-1">Ejemplo CSV:</p>
+                                            <code className="text-[10px] text-zinc-500 block leading-tight">
+                                                Juan Pérez, 099123456, juan@mail.com, Honda, CG 150<br/>
+                                                María López, 098654321
+                                            </code>
+                                        </div>
+                                        <div className="bg-zinc-900/40 p-2.5 rounded border border-zinc-800">
+                                            <p className="font-semibold text-zinc-300 mb-1">¿Cómo exportar de WhatsApp?</p>
+                                            <p className="text-[10px] text-zinc-500 leading-normal">
+                                                1. Sincronizá tu cel con **Google Contacts** y exportalos a **VCF** desde contacts.google.com.<br/>
+                                                2. O usá extensiones de Chrome (como *WA Web Plus* o *CoCo*) en WhatsApp Web para bajar la lista a CSV.
+                                            </p>
+                                        </div>
+                                    </div>
                                 </div>
 
                                 {/* Textarea */}
@@ -226,7 +315,7 @@ export function CargaMasivaModal({
                                             setError("");
                                         }}
                                         placeholder="Juan Pérez, 099123456, juan@email.com, Honda, CG 150"
-                                        className="w-full h-48 bg-zinc-800 border border-zinc-600 rounded-xl px-4 py-3 text-sm text-white placeholder-zinc-500 focus:border-red-500 focus:ring-1 focus:ring-red-500/50 outline-none resize-none font-mono"
+                                        className="w-full h-48 bg-zinc-800 border border-zinc-600 rounded-lg px-4 py-3 text-sm text-white placeholder-zinc-500 focus:border-fede-accent focus:ring-1 focus:ring-fede-accent/50 outline-none resize-none font-mono"
                                     />
                                 </div>
 
@@ -239,15 +328,15 @@ export function CargaMasivaModal({
 
                                 <button
                                     onClick={() => fileRef.current?.click()}
-                                    className="w-full py-3 border-2 border-dashed border-zinc-600 rounded-xl text-sm text-zinc-400 hover:border-red-500 hover:text-red-400 transition-colors flex items-center justify-center gap-2"
+                                    className="w-full py-3 border-2 border-dashed border-zinc-600 rounded-lg text-sm text-zinc-400 hover:border-fede-accent hover:text-fede-accent transition-colors flex items-center justify-center gap-2"
                                 >
                                     <Upload className="w-4 h-4" />
-                                    Subir archivo .csv
+                                    Subir archivo .csv o .vcf (vCard)
                                 </button>
                                 <input
                                     ref={fileRef}
                                     type="file"
-                                    accept=".csv,.txt"
+                                    accept=".csv,.txt,.vcf,.vcard"
                                     onChange={handleFileUpload}
                                     className="hidden"
                                 />
@@ -268,7 +357,7 @@ export function CargaMasivaModal({
                                 <button
                                     onClick={handlePreview}
                                     disabled={!textoCSV.trim()}
-                                    className="w-full py-3 bg-gradient-to-r from-red-600 to-red-500 rounded-xl text-white font-semibold text-sm hover:from-red-500 hover:to-red-400 transition-all disabled:opacity-40 disabled:cursor-not-allowed flex items-center justify-center gap-2"
+                                    className="btn-primary w-full py-3 text-sm disabled:opacity-40 disabled:cursor-not-allowed flex items-center justify-center gap-2"
                                 >
                                     <ChevronDown className="w-4 h-4" />
                                     Vista Previa
@@ -279,27 +368,78 @@ export function CargaMasivaModal({
                         {/* ============ PASO 2: PREVIEW ============ */}
                         {paso === "preview" && (
                             <div className="space-y-4">
-                                {/* Tabla preview */}
-                                <div className="overflow-x-auto">
+                                {/* Tabla preview editable */}
+                                <div className="overflow-x-auto max-h-[350px] border border-zinc-800 rounded-lg">
                                     <table className="w-full text-sm">
-                                        <thead>
-                                            <tr className="border-b border-zinc-700">
-                                                <th className="text-left py-2 px-2 text-zinc-400 font-medium">#</th>
-                                                <th className="text-left py-2 px-2 text-zinc-400 font-medium">Nombre</th>
-                                                <th className="text-left py-2 px-2 text-zinc-400 font-medium">Teléfono</th>
-                                                <th className="text-left py-2 px-2 text-zinc-400 font-medium hidden sm:table-cell">Email</th>
-                                                <th className="text-left py-2 px-2 text-zinc-400 font-medium hidden sm:table-cell">Moto</th>
+                                        <thead className="sticky top-0 bg-zinc-900 border-b border-zinc-700 z-10">
+                                            <tr className="text-zinc-400 font-medium text-xs">
+                                                <th className="text-left py-2 px-2">#</th>
+                                                <th className="text-left py-2 px-2 w-[180px]">Nombre *</th>
+                                                <th className="text-left py-2 px-2 w-[130px]">Teléfono *</th>
+                                                <th className="text-left py-2 px-2 hidden sm:table-cell w-[180px]">Email</th>
+                                                <th className="text-left py-2 px-2 hidden sm:table-cell w-[110px]">Marca</th>
+                                                <th className="text-left py-2 px-2 hidden sm:table-cell w-[110px]">Modelo</th>
+                                                <th className="text-center py-2 px-2 w-[60px]">Acción</th>
                                             </tr>
                                         </thead>
                                         <tbody>
-                                            {contactos.slice(0, 20).map((c, i) => (
-                                                <tr key={i} className="border-b border-zinc-800 hover:bg-zinc-800/50">
-                                                    <td className="py-2 px-2 text-zinc-500">{i + 1}</td>
-                                                    <td className="py-2 px-2 text-white">{c.nombre || <span className="text-red-400">—</span>}</td>
-                                                    <td className="py-2 px-2 text-zinc-300">{c.telefono || <span className="text-red-400">—</span>}</td>
-                                                    <td className="py-2 px-2 text-zinc-400 hidden sm:table-cell">{c.email || "—"}</td>
-                                                    <td className="py-2 px-2 text-zinc-400 hidden sm:table-cell">
-                                                        {c.marca ? `${c.marca} ${c.modelo || ""}`.trim() : "—"}
+                                            {contactos.map((c, i) => (
+                                                <tr key={i} className="border-b border-zinc-800/80 hover:bg-zinc-850 bg-zinc-900/30">
+                                                    <td className="py-2 px-2 text-zinc-500 text-xs">{i + 1}</td>
+                                                    <td className="py-1 px-1">
+                                                        <input
+                                                            type="text"
+                                                            value={c.nombre}
+                                                            onChange={(e) => updateContacto(i, "nombre", e.target.value)}
+                                                            className="bg-transparent border border-transparent hover:border-zinc-700 focus:border-fede-accent focus:bg-zinc-800 rounded px-2 py-1 text-xs text-white w-full outline-none transition-colors"
+                                                            required
+                                                        />
+                                                    </td>
+                                                    <td className="py-1 px-1">
+                                                        <input
+                                                            type="text"
+                                                            value={c.telefono}
+                                                            onChange={(e) => updateContacto(i, "telefono", e.target.value)}
+                                                            className="bg-transparent border border-transparent hover:border-zinc-700 focus:border-fede-accent focus:bg-zinc-800 rounded px-2 py-1 text-xs text-zinc-300 w-full outline-none transition-colors"
+                                                            required
+                                                        />
+                                                    </td>
+                                                    <td className="py-1 px-1 hidden sm:table-cell">
+                                                        <input
+                                                            type="text"
+                                                            value={c.email || ""}
+                                                            onChange={(e) => updateContacto(i, "email", e.target.value)}
+                                                            placeholder="—"
+                                                            className="bg-transparent border border-transparent hover:border-zinc-700 focus:border-fede-accent focus:bg-zinc-800 rounded px-2 py-1 text-xs text-zinc-400 w-full outline-none transition-colors"
+                                                        />
+                                                    </td>
+                                                    <td className="py-1 px-1 hidden sm:table-cell">
+                                                        <input
+                                                            type="text"
+                                                            value={c.marca || ""}
+                                                            onChange={(e) => updateContacto(i, "marca", e.target.value)}
+                                                            placeholder="—"
+                                                            className="bg-transparent border border-transparent hover:border-zinc-700 focus:border-fede-accent focus:bg-zinc-800 rounded px-2 py-1 text-xs text-zinc-400 w-full outline-none transition-colors"
+                                                        />
+                                                    </td>
+                                                    <td className="py-1 px-1 hidden sm:table-cell">
+                                                        <input
+                                                            type="text"
+                                                            value={c.modelo || ""}
+                                                            onChange={(e) => updateContacto(i, "modelo", e.target.value)}
+                                                            placeholder="—"
+                                                            className="bg-transparent border border-transparent hover:border-zinc-700 focus:border-fede-accent focus:bg-zinc-800 rounded px-2 py-1 text-xs text-zinc-400 w-full outline-none transition-colors"
+                                                        />
+                                                    </td>
+                                                    <td className="py-1 px-1 text-center">
+                                                        <button
+                                                            type="button"
+                                                            onClick={() => eliminarContacto(i)}
+                                                            className="p-1 hover:bg-red-500/10 text-red-400 hover:text-red-300 rounded transition-colors"
+                                                            title="Eliminar contacto"
+                                                        >
+                                                            <X className="w-4 h-4" />
+                                                        </button>
                                                     </td>
                                                 </tr>
                                             ))}
@@ -307,20 +447,14 @@ export function CargaMasivaModal({
                                     </table>
                                 </div>
 
-                                {contactos.length > 20 && (
-                                    <p className="text-xs text-zinc-500 text-center">
-                                        ...y {contactos.length - 20} contactos más
-                                    </p>
-                                )}
-
                                 {/* Resumen */}
-                                <div className="bg-zinc-800/50 border border-zinc-700 rounded-xl p-4 flex items-center justify-between">
+                                <div className="bg-zinc-800/50 border border-zinc-700 rounded-lg p-4 flex items-center justify-between">
                                     <span className="text-sm text-zinc-300">
-                                        Total: <strong className="text-white">{contactos.length}</strong> contactos
+                                        Total: <strong className="text-white">{contactos.length}</strong> contactos para importar
                                     </span>
                                     <span className="text-xs text-zinc-500">
                                         {contactos.filter((c) => !c.nombre || !c.telefono).length > 0 &&
-                                            `⚠️ ${contactos.filter((c) => !c.nombre || !c.telefono).length} con datos incompletos`}
+                                            `⚠️ ${contactos.filter((c) => !c.nombre || !c.telefono).length} incompletos`}
                                     </span>
                                 </div>
 
@@ -328,13 +462,13 @@ export function CargaMasivaModal({
                                 <div className="flex gap-3">
                                     <button
                                         onClick={() => setPaso("input")}
-                                        className="flex-1 py-3 bg-zinc-700 rounded-xl text-white font-semibold text-sm hover:bg-zinc-600 transition-colors"
+                                        className="flex-1 py-3 bg-zinc-700 rounded-lg text-white font-semibold text-sm hover:bg-zinc-600 transition-colors"
                                     >
                                         ← Volver
                                     </button>
                                     <button
                                         onClick={handleCargar}
-                                        className="flex-1 py-3 bg-gradient-to-r from-red-600 to-red-500 rounded-xl text-white font-semibold text-sm hover:from-red-500 hover:to-red-400 transition-all flex items-center justify-center gap-2"
+                                        className="btn-primary flex-1 py-3 text-sm flex items-center justify-center gap-2"
                                     >
                                         <Upload className="w-4 h-4" />
                                         Cargar {contactos.length} contactos
@@ -351,12 +485,12 @@ export function CargaMasivaModal({
                                     transition={{ duration: 1.5, repeat: Infinity, ease: "linear" }}
                                     className="inline-block"
                                 >
-                                    <Loader2 className="w-12 h-12 text-red-400 mx-auto" />
+                                    <Loader2 className="w-12 h-12 text-fede-accent mx-auto" />
                                 </motion.div>
                                 <p className="text-white font-semibold">Cargando contactos...</p>
                                 <div className="w-full bg-zinc-800 rounded-full h-3 overflow-hidden">
                                     <motion.div
-                                        className="h-full bg-gradient-to-r from-red-600 to-red-400 rounded-full"
+                                        className="h-full bg-gradient-to-r from-fede-accent to-fede-accent-glow rounded-full"
                                         initial={{ width: "0%" }}
                                         animate={{ width: `${progreso}%` }}
                                         transition={{ duration: 0.3 }}
@@ -371,17 +505,17 @@ export function CargaMasivaModal({
                             <div className="space-y-4">
                                 {/* Cards de resumen */}
                                 <div className="grid grid-cols-3 gap-3">
-                                    <div className="bg-emerald-500/10 border border-emerald-500/30 rounded-xl p-4 text-center">
+                                    <div className="bg-emerald-500/10 border border-emerald-500/30 rounded-lg p-4 text-center">
                                         <CheckCircle2 className="w-6 h-6 text-emerald-400 mx-auto mb-1" />
                                         <p className="text-2xl font-bold text-emerald-400">{resultado.nuevos}</p>
                                         <p className="text-xs text-emerald-300/70">Nuevos</p>
                                     </div>
-                                    <div className="bg-yellow-500/10 border border-yellow-500/30 rounded-xl p-4 text-center">
+                                    <div className="bg-yellow-500/10 border border-yellow-500/30 rounded-lg p-4 text-center">
                                         <Copy className="w-6 h-6 text-yellow-400 mx-auto mb-1" />
                                         <p className="text-2xl font-bold text-yellow-400">{resultado.duplicados}</p>
                                         <p className="text-xs text-yellow-300/70">Duplicados</p>
                                     </div>
-                                    <div className="bg-red-500/10 border border-red-500/30 rounded-xl p-4 text-center">
+                                    <div className="bg-red-500/10 border border-red-500/30 rounded-lg p-4 text-center">
                                         <AlertCircle className="w-6 h-6 text-red-400 mx-auto mb-1" />
                                         <p className="text-2xl font-bold text-red-400">{resultado.errores}</p>
                                         <p className="text-xs text-red-300/70">Errores</p>
@@ -414,7 +548,7 @@ export function CargaMasivaModal({
                                 {/* Cerrar */}
                                 <button
                                     onClick={handleClose}
-                                    className="w-full py-3 bg-gradient-to-r from-red-600 to-red-500 rounded-xl text-white font-semibold text-sm hover:from-red-500 hover:to-red-400 transition-all"
+                                    className="btn-primary w-full py-3 text-sm"
                                 >
                                     Cerrar
                                 </button>

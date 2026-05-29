@@ -108,6 +108,10 @@ create index if not exists idx_recordatorios_cliente
 
 alter table public.recordatorios_operativos enable row level security;
 
+-- DEUDA SEGURIDAD: politica abierta a anon (using/with check = true). La anon key
+-- es publica, asi que esto habilita lectura/escritura directa via PostgREST saltando
+-- los chequeos admin de la app. Cerrar (filtrar por owner/rol o revocar anon) antes
+-- de exponer el backend a trafico no confiable.
 -- Politica temporal mientras se termina hardening de service role / RLS
 do $$
 begin

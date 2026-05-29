@@ -1,9 +1,11 @@
+import { AdminShell } from "@/components/admin/AdminShell";
+
 export default function AdminLayout({
     children,
 }: {
     children: React.ReactNode;
 }) {
     return (
-        <main className="min-h-screen">{children}</main>
+        <AdminShell>{children}</AdminShell>
     );
 }

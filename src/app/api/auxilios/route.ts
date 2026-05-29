@@ -5,6 +5,8 @@ import { obtenerSesion } from "@/lib/auth";
 import { crearAuxilioSchema, actualizarAuxilioSchema } from "@/lib/validation";
 import { actualizarEstadoAuxilio, crearSolicitudAuxilio } from "@/lib/services";
 
+import { validarRangoCobertura } from "@/lib/geozone";
+
 export async function POST(request: Request) {
   try {
     const session = await obtenerSesion();
@@ -13,6 +15,10 @@ export async function POST(request: Request) {
     }
 
     const payload = await parseJson(request, crearAuxilioSchema);
+    
+    // Validar rango de cobertura (40km desde Montevideo) a costo $0
+    validarRangoCobertura(payload.lat, payload.lng);
+
     const result = await crearSolicitudAuxilio({
       clienteId: session.sub,
       lat: payload.lat,

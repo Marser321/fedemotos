@@ -129,6 +129,10 @@ alter table public.agenda_configuracion enable row level security;
 alter table public.agenda_franjas_semanales enable row level security;
 alter table public.agenda_excepciones enable row level security;
 
+-- DEUDA SEGURIDAD: politicas abiertas a anon (using/with check = true) en las 3
+-- tablas de agenda. La anon key es publica, asi que esto habilita lectura/escritura
+-- directa via PostgREST saltando los chequeos admin de la app. Cerrar (filtrar por
+-- owner/rol o revocar anon) antes de exponer el backend a trafico no confiable.
 -- Politica temporal mientras se cierra hardening de service role / RLS.
 do $$
 begin

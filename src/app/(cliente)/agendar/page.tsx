@@ -271,7 +271,7 @@ export default function AgendarPage() {
   return (
     <div className="min-h-screen pb-20 md:pb-0">
       <section className="relative px-4 pt-12 pb-8">
-        <div className="absolute inset-0 bg-[radial-gradient(circle_at_50%_0%,rgba(239,68,68,0.06),transparent_50%)]" />
+        <div className="absolute inset-0 bg-[radial-gradient(circle_at_50%_0%,rgba(172,28,29,0.12),transparent_50%)]" />
 
         <motion.div
           initial={{ opacity: 0, y: 20 }}
@@ -304,21 +304,21 @@ export default function AgendarPage() {
               className="glass-card p-6 space-y-5"
             >
               {agendaLoading ? (
-                <div className="rounded-xl border border-fede-border px-3 py-2 text-xs text-fede-muted inline-flex items-center gap-2">
+                <div className="rounded-lg border border-fede-border px-3 py-2 text-xs text-fede-muted inline-flex items-center gap-2">
                   <Loader2 className="w-3.5 h-3.5 animate-spin" />
                   Cargando disponibilidad de agenda...
                 </div>
               ) : null}
 
               {agendaError && (
-                <div className="rounded-xl border border-red-500/30 bg-red-500/10 px-3 py-2 text-sm text-red-300 inline-flex items-center gap-2">
+                <div className="rounded-lg border border-red-500/30 bg-red-500/10 px-3 py-2 text-sm text-red-300 inline-flex items-center gap-2">
                   <AlertTriangle className="w-4 h-4" />
                   {agendaError}
                 </div>
               )}
 
               {agendaConfig && !agendaConfig.acceptingBookings && (
-                <div className="rounded-xl border border-yellow-500/30 bg-yellow-500/10 px-3 py-3 text-xs text-yellow-200 space-y-2">
+                <div className="rounded-lg border border-yellow-500/30 bg-yellow-500/10 px-3 py-3 text-xs text-yellow-200 space-y-2">
                   <p className="inline-flex items-center gap-2">
                     <PauseCircle className="w-4 h-4" />
                     Agenda pausada temporalmente
@@ -511,13 +511,13 @@ export default function AgendarPage() {
                 animate={{ scale: 1 }}
                 transition={{ type: "spring", delay: 0.2 }}
               >
-                <CheckCircle className="w-20 h-20 text-green-500 mx-auto mb-6" />
+                <CheckCircle className="w-20 h-20 text-emerald-400 drop-shadow-[0_0_15px_rgba(52,211,153,0.35)] mx-auto mb-6" />
               </motion.div>
 
               <h2 className="text-2xl font-bold mb-2">Turno reservado</h2>
               <p className="text-fede-muted text-sm mb-6">
-                Te confirmamos por WhatsApp al{" "}
-                <span className="text-white font-medium">{formData.telefono}</span>
+                La reserva ya quedo en el sistema. Si necesitamos ajustar algo, te escribimos al{" "}
+                <span className="text-white font-medium">{formData.telefono}</span>.
               </p>
 
               <div className="glass-card p-4 text-left space-y-2 mb-6">
@@ -553,10 +553,10 @@ export default function AgendarPage() {
                 href={generarWhatsAppUrl()}
                 target="_blank"
                 rel="noopener noreferrer"
-                className="btn-primary w-full py-4 text-base flex items-center justify-center gap-2 mb-4"
+                className="btn-outline w-full py-4 text-base flex items-center justify-center gap-2 mb-4"
               >
                 <MessageCircle className="w-5 h-5" />
-                Confirmar por WhatsApp
+                Consultar por WhatsApp
               </a>
 
               <button
@@ -584,4 +584,3 @@ export default function AgendarPage() {
     </div>
   );
 }
-

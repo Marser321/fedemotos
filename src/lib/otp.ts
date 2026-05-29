@@ -42,7 +42,9 @@ function normalizeOtpProvider(): string {
 }
 
 function shouldExposeDevCode(): boolean {
-  return !isProductionEnv() && getOptionalEnv("OTP_DEV_ECHO_CODE") !== "false";
+  // Default-deny: el código solo se devuelve fuera de producción y con opt-in
+  // explícito. Un env ausente o mal configurado nunca puede filtrar el OTP.
+  return !isProductionEnv() && getOptionalEnv("OTP_DEV_ECHO_CODE") === "true";
 }
 
 function codeMatchesHash(inputCode: string, expectedHash: string): boolean {

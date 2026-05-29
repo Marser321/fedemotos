@@ -1,0 +1,238 @@
+{
+    "name": "API Turnos (GET + POST)",
+    "nodes": [
+        {
+            "parameters": {
+                "path": "api/turnos",
+                "httpMethod": "={{ $request.method }}",
+                "responseMode": "lastNode",
+                "options": {
+                    "rawBody": true
+                }
+            },
+            "name": "Webhook API Turnos",
+            "type": "n8n-nodes-base.webhook",
+            "typeVersion": 2,
+            "position": [
+                200,
+                300
+            ],
+            "webhookId": "turnos-api"
+        },
+        {
+            "parameters": {
+                "conditions": {
+                    "options": {
+                        "caseSensitive": true
+                    },
+                    "combinator": "and",
+                    "conditions": [
+                        {
+                            "leftValue": "={{ $json.headers['content-type'] }}",
+                            "rightValue": "application/json",
+                            "operator": {
+                                "type": "string",
+                                "operation": "contains"
+                            }
+                        }
+                    ]
+                }
+            },
+            "name": "Es POST?",
+            "type": "n8n-nodes-base.if",
+            "typeVersion": 2,
+            "position": [
+                400,
+                300
+            ]
+        },
+        {
+            "parameters": {
+                "operation": "read",
+                "fileSelector": "/data/turnos.csv",
+                "options": {}
+            },
+            "name": "Leer CSV (GET)",
+            "type": "n8n-nodes-base.spreadsheetFile",
+            "typeVersion": 4.5,
+            "position": [
+                600,
+                400
+            ]
+        },
+        {
+            "parameters": {
+                "assignments": {
+                    "assignments": [
+                        {
+                            "id": "id",
+                            "name": "Turno_ID",
+                            "value": "={{ $json.body.id }}",
+                            "type": "string"
+                        },
+                        {
+                            "id": "cliente",
+                            "name": "Cliente",
+                            "value": "={{ $json.body.cliente }}",
+                            "type": "string"
+                        },
+                        {
+                            "id": "moto",
+                            "name": "Moto",
+                            "value": "={{ $json.body.moto }}",
+                            "type": "string"
+                        },
+                        {
+                            "id": "servicio",
+                            "name": "Servicio",
+                            "value": "={{ $json.body.servicio }}",
+                            "type": "string"
+                        },
+                        {
+                            "id": "fecha",
+                            "name": "Fecha",
+                            "value": "={{ $json.body.fecha }}",
+                            "type": "string"
+                        },
+                        {
+                            "id": "estado",
+                            "name": "Estado",
+                            "value": "={{ $json.body.estado }}",
+                            "type": "string"
+                        },
+                        {
+                            "id": "created_at",
+                            "name": "Created_At",
+                            "value": "={{ $json.body.created_at }}",
+                            "type": "string"
+                        }
+                    ]
+                },
+                "options": {}
+            },
+            "name": "Preparar Datos (POST)",
+            "type": "n8n-nodes-base.set",
+            "typeVersion": 3.4,
+            "position": [
+                600,
+                200
+            ]
+        },
+        {
+            "parameters": {
+                "operation": "append",
+                "documentId": {
+                    "__rl": true,
+                    "value": "/data/turnos.csv",
+                    "mode": "url"
+                },
+                "sheetName": {
+                    "__rl": true,
+                    "value": "gid=0",
+                    "mode": "list"
+                },
+                "columns": {
+                    "mappingMode": "autoMapInputData"
+                },
+                "options": {}
+            },
+            "name": "Escribir en CSV (POST)",
+            "type": "n8n-nodes-base.spreadsheetFile",
+            "typeVersion": 4.5,
+            "position": [
+                800,
+                200
+            ]
+        },
+        {
+            "parameters": {
+                "respondWith": "json",
+                "responseBody": "={{ { success: true, message: 'Turno guardado' } }}"
+            },
+            "name": "Respuesta Exito (POST)",
+            "type": "n8n-nodes-base.respondToWebhook",
+            "typeVersion": 1.1,
+            "position": [
+                1000,
+                200
+            ]
+        },
+        {
+            "parameters": {
+                "respondWith": "allIncomingItems",
+                "options": {}
+            },
+            "name": "Respuesta JSON (GET)",
+            "type": "n8n-nodes-base.respondToWebhook",
+            "typeVersion": 1.1,
+            "position": [
+                800,
+                400
+            ]
+        }
+    ],
+    "connections": {
+        "Webhook API Turnos": {
+            "main": [
+                [
+                    {
+                        "node": "Es POST?",
+                        "type": "main",
+                        "index": 0
+                    }
+                ]
+            ]
+        },
+        "Es POST?": {
+            "main": [
+                [
+                    {
+                        "node": "Preparar Datos (POST)",
+                        "type": "main",
+                        "index": 0
+                    }
+                ],
+                [
+                    {
+                        "node": "Leer CSV (GET)",
+                        "type": "main",
+                        "index": 0
+                    }
+                ]
+            ]
+        },
+        "Preparar Datos (POST)": {
+            "main": [
+                [
+                    {
+                        "node": "Escribir en CSV (POST)",
+                        "type": "main",
+                        "index": 0
+                    }
+                ]
+            ]
+        },
+        "Escribir en CSV (POST)": {
+            "main": [
+                [
+                    {
+                        "node": "Respuesta Exito (POST)",
+                        "type": "main",
+                        "index": 0
+                    }
+                ]
+            ]
+        },
+        "Leer CSV (GET)": {
+            "main": [
+                [
+                    {
+                        "node": "Respuesta JSON (GET)",
+                        "type": "main",
+                        "index": 0
+                    }
+                ]
+            ]
+        }
+    }
+}

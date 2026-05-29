@@ -1,6 +1,7 @@
 import { NextResponse } from "next/server";
 import { apiErrorResponse, AppError } from "@/lib/errors";
-import { parseJson } from "@/lib/api";
+import { parseJson, getClientIp } from "@/lib/api";
+import { consumeRateLimit } from "@/lib/rate-limit";
 import { verificarOtpSchema } from "@/lib/validation";
 import { normalizePhone } from "@/lib/phone";
 import { requireOtpCode, verificarOtp } from "@/lib/otp";
@@ -12,6 +13,19 @@ import { crearSesion } from "@/lib/auth";
 
 export async function POST(request: Request) {
   try {
+    const ip = getClientIp(request);
+    const rate = consumeRateLimit(`otp-verificar:${ip}`, {
+      max: 10,
+      windowMs: 10 * 60 * 1000,
+    });
+    if (!rate.allowed) {
+      throw new AppError(
+        "RATE_LIMITED",
+        "Demasiados intentos. Esperá unos minutos e intentá de nuevo.",
+        429
+      );
+    }
+
     const payload = await parseJson(request, verificarOtpSchema);
     const telefono = normalizePhone(payload.telefono);
     const code = requireOtpCode(payload.code);

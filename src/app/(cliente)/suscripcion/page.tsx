@@ -42,7 +42,7 @@ export default function SuscripcionPage() {
         <div className="min-h-screen pb-20 md:pb-0">
             {/* Hero */}
             <section className="relative px-4 pt-12 pb-16 overflow-hidden">
-                <div className="absolute inset-0 bg-[radial-gradient(circle_at_50%_0%,rgba(239,68,68,0.12),transparent_50%)]" />
+                <div className="absolute inset-0 bg-[radial-gradient(circle_at_50%_0%,rgba(172,28,29,0.14),transparent_50%)]" />
 
                 <motion.div
                     initial={{ opacity: 0, y: 20 }}
@@ -90,7 +90,7 @@ export default function SuscripcionPage() {
                         >
                             <div className="flex items-start gap-3 mb-3">
                                 <div className="w-8 h-8 rounded-lg bg-red-500/15 flex items-center justify-center flex-shrink-0 mt-0.5">
-                                    <AlertTriangle className="w-4 h-4 text-red-400" />
+                                    <AlertTriangle className="w-4 h-4 text-red-300" />
                                 </div>
                                 <p className="text-sm text-fede-muted leading-relaxed">
                                     {item.dolor}

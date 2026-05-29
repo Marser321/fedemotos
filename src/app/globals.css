@@ -6,12 +6,16 @@
 
 @layer base {
   :root {
-    --bg-primary: #0a0a0a;
-    --bg-card: #141414;
-    --accent: #ef4444;
-    --accent-glow: #dc2626;
+    --brand-red: #AC1C1D;
+    --brand-red-glow: #E13232;
+    --brand-red-dark: #7F1415;
+    --brand-red-rgb: 172, 28, 29;
+    --bg-primary: #121212;
+    --bg-card: rgba(18, 18, 18, 0.4);
+    --accent: var(--brand-red);
+    --accent-glow: var(--brand-red-glow);
     --text-primary: #ffffff;
-    --text-muted: #a3a3a3;
+    --text-muted: #a1a1aa;
   }
 
   * {
@@ -22,6 +26,9 @@
 
   body {
     background-color: var(--bg-primary);
+    background-image:
+      radial-gradient(circle at 20% 0%, rgba(var(--brand-red-rgb), 0.08), transparent 34rem),
+      linear-gradient(180deg, rgba(255, 255, 255, 0.025), transparent 18rem);
     color: var(--text-primary);
     font-family: var(--font-poppins), "Poppins", sans-serif;
     -webkit-font-smoothing: antialiased;
@@ -35,44 +42,54 @@
   }
 
   ::-webkit-scrollbar-track {
-    background: #0a0a0a;
+    background: #121212;
   }
 
   ::-webkit-scrollbar-thumb {
-    background: #333;
+    background: #27272a;
     border-radius: 3px;
   }
 
   ::-webkit-scrollbar-thumb:hover {
-    background: #ef4444;
+    background: var(--brand-red);
   }
 }
 
 @layer components {
   /* Card con glassmorphism */
   .glass-card {
-    @apply bg-fede-card/80 backdrop-blur-xl border border-fede-border rounded-2xl;
+    @apply rounded-lg border border-white/10 bg-zinc-900/50 shadow-xl backdrop-blur-xl;
+    box-shadow: 0 18px 55px rgba(0, 0, 0, 0.22), inset 0 1px 0 rgba(255, 255, 255, 0.04);
   }
 
-  /* Botón primario rojo */
+  /* Botón primario Rojo Fede */
   .btn-primary {
-    @apply bg-fede-accent hover:bg-fede-accent-glow text-white font-poppins font-semibold 
-           px-6 py-3 rounded-xl transition-all duration-300 
-           hover:shadow-[0_0_30px_rgba(239,68,68,0.4)] active:scale-95;
+    @apply border border-red-300/15 bg-gradient-to-br from-fede-accent-glow via-fede-accent to-fede-accent-dark text-white font-poppins font-semibold
+           px-6 py-3 rounded-lg transition-all duration-300 active:scale-95
+           focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-fede-accent/50 focus-visible:ring-offset-2 focus-visible:ring-offset-fede-black
+           disabled:pointer-events-none disabled:opacity-50;
+    box-shadow: 0 12px 28px rgba(var(--brand-red-rgb), 0.22);
+  }
+
+  .btn-primary:hover {
+    box-shadow: 0 0 34px rgba(var(--brand-red-rgb), 0.42);
+    filter: brightness(1.07);
   }
 
   /* Botón outline */
   .btn-outline {
-    @apply border border-fede-accent text-fede-accent hover:bg-fede-accent/10 
-           font-poppins font-semibold px-6 py-3 rounded-xl transition-all duration-300;
+    @apply border border-fede-accent/50 bg-fede-accent/5 text-fede-accent hover:border-fede-accent hover:bg-fede-accent/10 hover:text-white
+           font-poppins font-semibold px-6 py-3 rounded-lg transition-all duration-300
+           focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-fede-accent/40 focus-visible:ring-offset-2 focus-visible:ring-offset-fede-black
+           disabled:pointer-events-none disabled:opacity-50;
   }
 
   /* Input estilizado */
   .input-dark {
-    @apply w-full bg-fede-card border border-fede-border rounded-xl px-4 py-3 
+    @apply w-full bg-zinc-950/50 border border-white/10 rounded-lg px-4 py-3
            text-white placeholder:text-fede-muted font-poppins text-sm
            focus:outline-none focus:border-fede-accent focus:ring-1 focus:ring-fede-accent/50
-           transition-all duration-300;
+           transition-all duration-300 disabled:cursor-not-allowed disabled:opacity-60;
   }
 
   /* Stat card del dashboard */
@@ -82,15 +99,15 @@
 
   /* Badge */
   .badge-active {
-    @apply inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-green-500/20 text-green-400;
+    @apply inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-semibold bg-emerald-500/10 text-emerald-300 border border-emerald-500/25;
   }
 
   .badge-pending {
-    @apply inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-yellow-500/20 text-yellow-400;
+    @apply inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-semibold bg-yellow-500/10 text-yellow-500 border border-yellow-500/20;
   }
 
   .badge-inactive {
-    @apply inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-red-500/20 text-red-400;
+    @apply inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-semibold bg-red-500/10 text-red-500 border border-red-500/20;
   }
 }
 

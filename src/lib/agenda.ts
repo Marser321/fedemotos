@@ -1,6 +1,7 @@
 import { AppError } from "./errors";
 import { getSupportWhatsappNumber } from "./env";
 import { getInsforgeServiceClient } from "./insforge";
+import { crearComunicacionOperativa } from "./services/comunicaciones";
 import type {
   AgendaAvailabilitySlot,
   AgendaConfig,
@@ -864,9 +865,29 @@ export async function actualizarTurnoAgendaAdmin(
 
   const lookup = (await service.database
     .from("turnos_taller")
-    .select("id")
+    .select(
+      `
+        id,
+        cliente_id,
+        servicio_solicitado,
+        estado,
+        fecha_turno,
+        fecha_slot,
+        hora_slot,
+        clientes (nombre_completo, telefono)
+      `
+    )
     .eq("id", id)
-    .maybeSingle()) as DbResponse<{ id: string }>;
+    .maybeSingle()) as DbResponse<{
+    id: string;
+    cliente_id: string;
+    servicio_solicitado: string;
+    estado: string;
+    fecha_turno: string;
+    fecha_slot: string | null;
+    hora_slot: string | null;
+    clientes: { nombre_completo: string; telefono: string } | null;
+  }>;
 
   throwDbError(lookup.error, "AGENDA_TURNO_LOOKUP_FAILED", "No se pudo buscar turno");
   if (!lookup.data?.id) {
@@ -909,6 +930,53 @@ export async function actualizarTurnoAgendaAdmin(
     throw new AppError("AGENDA_TURNO_NOT_FOUND", "Turno no encontrado", 404);
   }
 
+  const previous = mapTurnoRow({
+    id: lookup.data.id,
+    servicio_solicitado: lookup.data.servicio_solicitado,
+    estado: lookup.data.estado,
+    notas: null,
+    fecha_turno: lookup.data.fecha_turno,
+    fecha_slot: lookup.data.fecha_slot,
+    hora_slot: lookup.data.hora_slot,
+    clientes: lookup.data.clientes,
+  });
+  const cliente = lookup.data.clientes;
+  if (cliente?.telefono) {
+    if (patch.estado === "cancelado" && previous.estado !== "cancelado") {
+      await crearComunicacionOperativa({
+        sourceType: "turno",
+        sourceId: id,
+        clienteId: lookup.data.cliente_id,
+        eventType: "turno_cancelado",
+        recipientPhone: cliente.telefono,
+        message: `Hola ${cliente.nombre_completo}, te avisamos que tu turno del ${previous.fecha} a las ${previous.hora} en Fede Moto Servicios fue cancelado. Coordinamos una nueva fecha por este medio.`,
+        payload: {
+          turnoId: id,
+          fechaAnterior: previous.fecha,
+          horaAnterior: previous.hora,
+          servicio: lookup.data.servicio_solicitado,
+        },
+      });
+    } else if (patch.fecha && patch.hora && (patch.fecha !== previous.fecha || patch.hora !== previous.hora)) {
+      await crearComunicacionOperativa({
+        sourceType: "turno",
+        sourceId: id,
+        clienteId: lookup.data.cliente_id,
+        eventType: "turno_reprogramado",
+        recipientPhone: cliente.telefono,
+        message: `Hola ${cliente.nombre_completo}, reprogramamos tu turno en Fede Moto Servicios para el ${patch.fecha} a las ${patch.hora}.`,
+        payload: {
+          turnoId: id,
+          fechaAnterior: previous.fecha,
+          horaAnterior: previous.hora,
+          fecha: patch.fecha,
+          hora: patch.hora,
+          servicio: lookup.data.servicio_solicitado,
+        },
+      });
+    }
+  }
+
   return { id: response.data.id };
 }
 
@@ -921,4 +989,3 @@ export function buildAgendaSlotNowForManualService() {
     fechaTurnoIso: buildTurnoTimestampIso(fechaSlot, horaSlot),
   };
 }
-

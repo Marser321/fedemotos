@@ -6,8 +6,41 @@ export type TurnoEstado = "pendiente" | "en_proceso" | "completado" | "cancelado
 export type AuxilioTipo = "auxilio" | "traslado";
 export type AuxilioPrioridad = "baja" | "media" | "alta" | "urgente";
 export type ReminderEstado = "pendiente" | "enviado_manual" | "omitido" | "error";
+export type CommunicationStatus = ReminderEstado;
+export type CommunicationSourceType =
+  | "orden"
+  | "turno"
+  | "auxilio"
+  | "traslado"
+  | "membresia"
+  | "servicio"
+  | "legacy_recordatorio";
+export type CommunicationEventType =
+  | "orden_lista"
+  | "orden_espera_repuestos"
+  | "turno_creado"
+  | "turno_reprogramado"
+  | "turno_cancelado"
+  | "auxilio_recibido"
+  | "auxilio_en_camino"
+  | "auxilio_completado"
+  | "traslado_recibido"
+  | "traslado_en_camino"
+  | "traslado_completado"
+  | "membresia_vence_7"
+  | "membresia_vence_3"
+  | "membresia_vence_1"
+  | "service_control_30";
 export type AgendaStatus = "activa" | "pausada" | "deshabilitada";
 export type AgendaExceptionTipo = "bloqueo" | "habilitacion";
+export type OrdenEstado =
+  | "ingresado"
+  | "diagnostico"
+  | "espera_repuestos"
+  | "reparacion"
+  | "listo"
+  | "entregado"
+  | "cancelado";
 export type AgendaSlotReason =
   | "booked"
   | "blocked"
@@ -105,6 +138,27 @@ export interface ClienteCuenta {
   estado: MembresiaEstado;
   cuposRestantes: number;
   fechaInicio: string;
+  ordenesActivas?: Array<{
+    id: string;
+    titulo: string;
+    estado: OrdenEstado;
+    vehiculo?: string | null;
+    fechaPrometida?: string | null;
+  }>;
+  turnosProximos?: Array<{
+    id: string;
+    fecha: string;
+    hora: string;
+    estado: TurnoEstado;
+    servicio: string;
+  }>;
+  auxiliosActivos?: Array<{
+    id: string;
+    tipo: AuxilioTipo;
+    estado: AuxilioEstado;
+    solicitadoEn: string;
+    motivo?: string | null;
+  }>;
 }
 
 export interface SessionPayload {
@@ -183,6 +237,27 @@ export interface ReminderQueueItem {
   payload: Record<string, unknown>;
 }
 
+export interface CommunicationQueueItem {
+  id: string;
+  sourceType: CommunicationSourceType;
+  sourceId: string;
+  eventType: CommunicationEventType;
+  status: CommunicationStatus;
+  channel: "whatsapp";
+  clienteId?: string | null;
+  clienteNombre: string;
+  telefono: string;
+  scheduledDate: string;
+  messagePreview: string;
+  waLink: string;
+  sourceLabel: string;
+  eventLabel: string;
+  sentAt?: string | null;
+  sentBy?: string | null;
+  skipReason?: string | null;
+  payload: Record<string, unknown>;
+}
+
 export interface ClienteOperacionPrefill {
   found: boolean;
   clienteId?: string;
@@ -242,4 +317,60 @@ export interface AgendaTurnoRow {
   estado: TurnoEstado;
   servicio: string;
   notas?: string | null;
+}
+
+export interface OrdenTimelineEvent {
+  id: string;
+  ordenId: string;
+  tipo: "estado" | "nota" | "creacion";
+  estadoDesde?: OrdenEstado | null;
+  estadoHasta?: OrdenEstado | null;
+  nota?: string | null;
+  createdBy?: string | null;
+  createdAt: string;
+}
+
+export interface OrdenTaller {
+  id: string;
+  clienteId: string;
+  clienteNombre: string;
+  telefono: string;
+  vehiculoId?: string | null;
+  vehiculo?: string | null;
+  turnoId?: string | null;
+  estado: OrdenEstado;
+  titulo: string;
+  descripcion?: string | null;
+  diagnostico?: string | null;
+  notasInternas?: string | null;
+  costoEstimado: number;
+  costoFinal: number;
+  fechaIngreso: string;
+  fechaPrometida?: string | null;
+  ingresadoAt?: string | null;
+  diagnosticoAt?: string | null;
+  esperaRepuestosAt?: string | null;
+  reparacionAt?: string | null;
+  listoAt?: string | null;
+  entregadoAt?: string | null;
+  canceladoAt?: string | null;
+  createdAt: string;
+  updatedAt: string;
+  timeline?: OrdenTimelineEvent[];
+}
+
+export interface AdminWorkdaySummary {
+  stats: DashboardStats;
+  operacionesAbiertas: OperacionAuxilioItem[];
+  turnosHoy: AgendaTurnoRow[];
+  ordenesActivas: OrdenTaller[];
+  recordatoriosPendientes: ReminderQueueItem[];
+  comunicacionesPendientes?: CommunicationQueueItem[];
+  alertas: Array<{
+    id: string;
+    level: "info" | "warning" | "critical";
+    title: string;
+    detail: string;
+    href?: string;
+  }>;
 }

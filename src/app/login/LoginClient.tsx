@@ -102,7 +102,7 @@ export default function LoginClient() {
 
   return (
     <div className="min-h-screen flex items-center justify-center px-4 relative">
-      <div className="absolute inset-0 bg-[radial-gradient(circle_at_50%_30%,rgba(239,68,68,0.08),transparent_60%)]" />
+      <div className="absolute inset-0 bg-[radial-gradient(circle_at_50%_30%,rgba(172,28,29,0.09),transparent_60%)]" />
 
       <motion.div
         initial={{ opacity: 0, y: 20 }}
@@ -111,7 +111,7 @@ export default function LoginClient() {
         className="relative z-10 w-full max-w-sm"
       >
         <div className="flex flex-col items-center mb-8">
-          <div className="w-16 h-16 rounded-2xl bg-white/5 border border-fede-border flex items-center justify-center shadow-[0_0_40px_rgba(239,68,68,0.2)] mb-4 overflow-hidden">
+          <div className="w-16 h-16 rounded-lg bg-white/5 border border-fede-border flex items-center justify-center shadow-[0_0_40px_rgba(172,28,29,0.24)] mb-4 overflow-hidden">
             <Image src="/branding/logo-rayo.png" alt="Fede Motos" width={46} height={46} />
           </div>
           <h1 className="text-xl font-bold">
@@ -120,7 +120,7 @@ export default function LoginClient() {
           <p className="text-fede-muted text-sm mt-1">Iniciá sesión para continuar</p>
         </div>
 
-        <div className="flex gap-1 mb-6 bg-fede-card rounded-xl p-1 border border-fede-border">
+        <div className="flex gap-1 mb-6 bg-fede-card rounded-lg p-1 border border-fede-border">
           <button
             onClick={() => {
               setMode("cliente");
@@ -128,7 +128,7 @@ export default function LoginClient() {
             }}
             className={`flex-1 flex items-center justify-center gap-2 py-2.5 rounded-lg text-sm font-medium transition-all duration-300 ${
               mode === "cliente"
-                ? "bg-fede-accent text-white shadow-[0_0_15px_rgba(239,68,68,0.3)]"
+                ? "bg-fede-accent text-white shadow-[0_0_15px_rgba(172,28,29,0.34)]"
                 : "text-fede-muted hover:text-white"
             }`}
           >
@@ -142,7 +142,7 @@ export default function LoginClient() {
             }}
             className={`flex-1 flex items-center justify-center gap-2 py-2.5 rounded-lg text-sm font-medium transition-all duration-300 ${
               mode === "admin"
-                ? "bg-fede-accent text-white shadow-[0_0_15px_rgba(239,68,68,0.3)]"
+                ? "bg-fede-accent text-white shadow-[0_0_15px_rgba(172,28,29,0.34)]"
                 : "text-fede-muted hover:text-white"
             }`}
           >
@@ -204,7 +204,7 @@ export default function LoginClient() {
                         />
                       </div>
                     </div>
-                    <div className="rounded-xl border border-white/10 bg-white/5 p-3 text-xs text-fede-muted">
+                    <div className="rounded-lg border border-white/10 bg-white/5 p-3 text-xs text-fede-muted">
                       <p className="flex items-center gap-2">
                         <Mail className="w-4 h-4 text-fede-accent" />
                         Código enviado a {destination || "tu email"}
@@ -217,7 +217,7 @@ export default function LoginClient() {
                     </div>
                     <button
                       type="button"
-                      className="text-xs text-fede-accent hover:text-red-400 transition-colors"
+                      className="text-xs text-fede-accent hover:text-fede-accent-glow transition-colors"
                       onClick={resetClienteFlow}
                     >
                       Cambiar teléfono
@@ -253,7 +253,7 @@ export default function LoginClient() {
                   initial={{ opacity: 0, y: -5 }}
                   animate={{ opacity: 1, y: 0 }}
                   exit={{ opacity: 0 }}
-                  className="flex items-center gap-2 text-red-400 text-sm bg-red-500/10 border border-red-500/20 rounded-xl px-4 py-3"
+                  className="flex items-center gap-2 text-red-300 text-sm bg-red-500/10 border border-red-500/20 rounded-lg px-4 py-3"
                 >
                   <AlertTriangle className="w-4 h-4 flex-shrink-0" />
                   {error}
@@ -293,7 +293,7 @@ export default function LoginClient() {
 
         <p className="text-center text-fede-muted text-sm mt-6">
           ¿No tenés cuenta?{" "}
-          <Link href="/registro" className="text-fede-accent hover:text-red-400 transition-colors font-medium">
+          <Link href="/registro" className="text-fede-accent hover:text-fede-accent-glow transition-colors font-medium">
             Registrate
           </Link>
         </p>

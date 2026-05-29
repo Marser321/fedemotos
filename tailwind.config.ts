@@ -11,14 +11,14 @@ const config: Config = {
         extend: {
             colors: {
                 fede: {
-                    black: "#0a0a0a",
-                    card: "#141414",
-                    "card-hover": "#1a1a1a",
-                    accent: "#ef4444",
-                    "accent-glow": "#dc2626",
-                    "accent-dark": "#991b1b",
-                    muted: "#a3a3a3",
-                    border: "#262626",
+                    black: "#121212",
+                    card: "#18181b",
+                    "card-hover": "#27272a",
+                    accent: "#AC1C1D",
+                    "accent-glow": "#E13232",
+                    "accent-dark": "#7F1415",
+                    muted: "#a1a1aa",
+                    border: "rgba(255, 255, 255, 0.1)",
                 },
             },
             fontFamily: {
@@ -34,16 +34,16 @@ const config: Config = {
                 pulseEmergency: {
                     "0%, 100%": {
                         transform: "scale(1)",
-                        boxShadow: "0 0 0 0 rgba(239, 68, 68, 0.7)",
+                        boxShadow: "0 0 0 0 rgba(172, 28, 29, 0.7)",
                     },
                     "50%": {
                         transform: "scale(1.05)",
-                        boxShadow: "0 0 0 20px rgba(239, 68, 68, 0)",
+                        boxShadow: "0 0 0 20px rgba(172, 28, 29, 0)",
                     },
                 },
                 glow: {
-                    "0%": { boxShadow: "0 0 20px rgba(239, 68, 68, 0.3)" },
-                    "100%": { boxShadow: "0 0 40px rgba(239, 68, 68, 0.6)" },
+                    "0%": { boxShadow: "0 0 20px rgba(172, 28, 29, 0.32)" },
+                    "100%": { boxShadow: "0 0 40px rgba(172, 28, 29, 0.58)" },
                 },
                 slideUp: {
                     "0%": { transform: "translateY(20px)", opacity: "0" },
