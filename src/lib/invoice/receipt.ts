@@ -90,7 +90,7 @@ export async function generateOperationalReceiptPdf(servicio: ServicioRegistro):
 
   const logoData = await loadImageDataUrl("/branding/logo-rayo.png");
   if (logoData) {
-    doc.addImage(logoData, "PNG", 18, 18, 14, 14);
+    doc.addImage(logoData, "PNG", 18, 18, 14, 14, undefined, "FAST");
   }
 
   doc.setTextColor(20, 20, 20);
@@ -216,7 +216,7 @@ export async function generateOrderReceiptPdf(orden: OrdenTaller): Promise<void>
 
   const logoData = await loadImageDataUrl("/branding/logo-rayo.png");
   if (logoData) {
-    doc.addImage(logoData, "PNG", 18, 18, 14, 14);
+    doc.addImage(logoData, "PNG", 18, 18, 14, 14, undefined, "FAST");
   }
 
   doc.setTextColor(20, 20, 20);
