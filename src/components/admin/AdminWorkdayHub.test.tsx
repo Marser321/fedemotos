@@ -31,7 +31,7 @@ const dataLlena: AdminWorkdaySummary = {
       vehiculo: "Yamaha R3",
       prioridad: "alta",
       motivo: "Pinchadura rueda trasera",
-    }
+    } as AdminWorkdaySummary["operacionesAbiertas"][number],
   ],
   turnosHoy: [
     {
@@ -39,7 +39,7 @@ const dataLlena: AdminWorkdaySummary = {
       clienteNombre: "Pablo Marmol",
       servicio: "Cambio de aceite",
       hora: "10:00",
-    }
+    } as AdminWorkdaySummary["turnosHoy"][number],
   ],
   ordenesActivas: [
     {
